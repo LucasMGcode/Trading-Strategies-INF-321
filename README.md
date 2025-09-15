@@ -18,7 +18,7 @@ A ideia central é democratizar o acesso ao conhecimento sobre opções, transfo
 
 -   **Backend:** Node.js (Nest.js, TypeScript)
 -   **Frontend:** React (TypeScript, Material-UI)
--   **Banco de Dados:** SQL Server
+-   **Banco de Dados:** PostgreSQL
 -   **Dados de Mercado:** Integração com APIs de dados históricos (ex: Yahoo Finance)
 
 ## 📈 Funcionalidades do MVP
@@ -179,3 +179,84 @@ classDiagram
 - **Asset**: Ativo subjacente usado nas simulações (ações, ETFs, índices, etc.).  
 - **Simulation**: Execução de uma estratégia aplicada a um ativo em um período histórico, contendo os resultados (lucro/prejuízo).  
 - **SimulationLeg**: Detalha cada operação concreta da simulação (preço de entrada, saída, quantidade, P&L).
+
+## DER do Banco de Dados (MVP)
+
+O diagrama abaixo representa o modelo lógico do banco para o MVP, alinhado às entidades do sistema (User, Strategy, StrategyLeg, Asset, Simulation e SimulationLeg) e seus relacionamentos.
+
+```mermaid
+erDiagram
+    USER ||--o{ SIMULATION : "tem"
+    STRATEGY ||--o{ STRATEGY_LEG : "composta por"
+    STRATEGY ||--o{ SIMULATION : "aplicada em"
+    ASSET ||--o{ SIMULATION : "usada por"
+    SIMULATION ||--o{ SIMULATION_LEG : "contém"
+
+    USER {
+      uuid id PK
+      string username
+      string email
+      string passwordHash
+      string experienceLevel
+      date   createdAt
+    }
+
+    STRATEGY {
+      uuid id PK
+      string name
+      string proficiencyLevel
+      string marketOutlook
+      string strategyType
+      date createdAt
+      date updatedAt
+    }
+
+    STRATEGY_LEG {
+      uuid id PK
+      uuid strategyId FK
+      string action
+      string instrumentType
+      int    quantityRatio
+      string strikeRelation
+      int    orderSequence
+    }
+
+    ASSET {
+      uuid id PK
+      string symbol
+      string name
+      string assetType
+      date createdAt
+      date updatedAt
+    }
+
+    SIMULATION {
+      uuid id PK
+      uuid userId FK
+      uuid strategyId FK
+      uuid assetId FK
+      string simulationName
+      date   startDate
+      date   endDate
+      float  totalInvestment
+      float  totalReturn
+      float  returnPercentage
+      string status
+      date   createdAt
+      date   updatedAt
+    }
+
+    SIMULATION_LEG {
+      uuid id PK
+      uuid simulationId FK
+      string action
+      string instrumentType
+      int    quantity
+      float  strikePrice
+      float  entryPrice
+      float  exitPrice
+      float  profitLoss
+      date   entryDate
+      date   exitDate
+    }
+```
