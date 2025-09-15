@@ -94,3 +94,88 @@ graph TD
 
     uc_view_strategy_details --> uc_create_simulation
     uc_view_dashboard --> uc_create_simulation
+```
+
+## Diagrama de Classes (Versão Inicial - MVP)
+
+Este diagrama representa as entidades principais do sistema (MVP), mantendo apenas as classes essenciais para autenticação, catálogo de estratégias e simulação básica.
+
+```mermaid
+classDiagram
+  class User {
+    +UUID id
+    +string username
+    +string email
+    +string passwordHash
+    +ENUM experienceLevel
+    +Date createdAt
+  }
+
+  class Strategy {
+    +UUID id
+    +string name
+    +ENUM proficiencyLevel
+    +ENUM marketOutlook
+    +ENUM strategyType
+  }
+
+  class StrategyLeg {
+    +UUID id
+    +UUID strategyId
+    +ENUM action
+    +ENUM instrumentType
+    +int  quantityRatio
+    +ENUM strikeRelation
+    +int  orderSequence
+  }
+
+  class Asset {
+    +UUID id
+    +string symbol
+    +string name
+    +ENUM assetType
+  }
+
+  class Simulation {
+    +UUID id
+    +UUID userId
+    +UUID strategyId
+    +UUID assetId
+    +string simulationName
+    +Date startDate
+    +Date endDate
+    +number totalInvestment
+    +number totalReturn
+    +number returnPercentage
+    +ENUM status
+    +Date createdAt
+  }
+
+  class SimulationLeg {
+    +UUID id
+    +UUID simulationId
+    +ENUM action
+    +ENUM instrumentType
+    +int quantity
+    +number strikePrice
+    +number entryPrice
+    +number exitPrice
+    +number profitLoss
+  }
+
+  %% Relacionamentos
+  User "1" --> "0..*" Simulation
+  Strategy "1" --> "0..*" StrategyLeg
+  Strategy "1" --> "0..*" Simulation
+  Asset "1" --> "0..*" Simulation
+  Simulation "1" --> "1..*" SimulationLeg
+```
+
+### Detalhamento das Entidades (MVP)
+
+- **User**: Representa os usuários do sistema. Cada usuário pode autenticar-se, acessar o catálogo de estratégias e criar simulações.  
+- **Strategy**: Conjunto de regras pré-definidas de operações de opções financeiras (ex: Long Call, Covered Call).  
+- **StrategyLeg**: Define cada perna da estratégia (compra/venda de CALL, PUT ou ação) e sua proporção.  
+- **Asset**: Ativo subjacente usado nas simulações (ações, ETFs, índices, etc.).  
+- **Simulation**: Execução de uma estratégia aplicada a um ativo em um período histórico, contendo os resultados (lucro/prejuízo).  
+- **SimulationLeg**: Detalha cada operação concreta da simulação (preço de entrada, saída, quantidade, P&L).
