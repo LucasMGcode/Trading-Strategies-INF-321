@@ -165,10 +165,10 @@ classDiagram
 
   %% Relacionamentos
   User "1" --> "0..*" Simulation
-  Strategy "1" --> "0..*" StrategyLeg
+  Strategy "1" --> "1..*" StrategyLeg
   Strategy "1" --> "0..*" Simulation
   Asset "1" --> "0..*" Simulation
-  Simulation "1" --> "1..*" SimulationLeg
+  Simulation "1" --> "0..*" SimulationLeg
 ```
 
 ### Detalhamento das Entidades (MVP)
@@ -187,7 +187,7 @@ O diagrama abaixo representa o modelo lógico do banco para o MVP, alinhado às 
 ```mermaid
 erDiagram
     USER ||--o{ SIMULATION : "tem"
-    STRATEGY ||--o{ STRATEGY_LEG : "composta por"
+    STRATEGY ||--|{ STRATEGY_LEG : "composta por"
     STRATEGY ||--o{ SIMULATION : "aplicada em"
     ASSET ||--o{ SIMULATION : "usada por"
     SIMULATION ||--o{ SIMULATION_LEG : "contém"
