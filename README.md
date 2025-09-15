@@ -260,3 +260,19 @@ erDiagram
       date   exitDate
     }
 ```
+
+## Protótipo das Telas (Figma)
+
+[![Abrir Protótipo no Figma](https://img.shields.io/badge/🔗%20Abrir%20Protótipo%20no%20Figma-8A2BE2?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/design/bZWHJs6Akea4WNptNEv2lW/Trading-Strategies-INF-321?node-id=0-1&m=dev&t=1fuT0vCOUKdeZrdt-1)
+
+O protótipo de interface foi desenvolvido no **Figma**, contemplando as principais telas do sistema.
+
+### Pré-visualização
+
+| Página Inicial | Dashboard | Catálogo de Estratégias |
+|---|---|---|
+| ![Página Inicial](docs/prototipo/pagina_inicial.png) | ![Dashboard](docs/prototipo/dashboard.png) | ![Catálogo de Estratégias](docs/prototipo/estrategias.png) |
+
+| Simulações | Perfil do Usuário |
+|---|---|
+| ![Simulações](docs/prototipo/simulacoes.png) | ![Perfil do Usuário](docs/prototipo/perfil_usuario.png) |
