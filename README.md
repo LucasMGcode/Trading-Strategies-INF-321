@@ -263,7 +263,7 @@ erDiagram
 
 ## Protótipo das Telas (Figma)
 
-[![Abrir Protótipo no Figma](https://img.shields.io/badge/🔗%20Abrir%20Protótipo%20no%20Figma-8A2BE2?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/design/bZWHJs6Akea4WNptNEv2lW/Trading-Strategies-INF-321?node-id=0-1&m=dev&t=1fuT0vCOUKdeZrdt-1)
+[![Abrir Protótipo no Figma](https://img.shields.io/badge/🔗%20Abrir%20Protótipo%20no%20Figma-8A2BE2?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/proto/bZWHJs6Akea4WNptNEv2lW/Trading-Strategies-INF-321?node-id=0-1&t=1fuT0vCOUKdeZrdt-1)
 
 O protótipo de interface foi desenvolvido no **Figma**, contemplando as principais telas do sistema.
 
