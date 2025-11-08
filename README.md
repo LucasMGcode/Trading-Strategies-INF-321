@@ -18,7 +18,7 @@ A ideia central é democratizar o acesso ao conhecimento sobre opções, transfo
 
 -   **Backend:** Node.js (Nest.js, TypeScript)
 -   **Frontend:** React (TypeScript, Material-UI)
--   **Banco de Dados:** PostgreSQL
+-   **Banco de Dados:** --
 -   **Dados de Mercado:** Integração com APIs de dados históricos (ex: Yahoo Finance)
 
 ## 📈 Funcionalidades do MVP
