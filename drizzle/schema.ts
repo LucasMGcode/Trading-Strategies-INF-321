@@ -195,9 +195,18 @@ export const externalAccounts = pgTable('external_accounts', {
         .notNull(),
 });
 
+// Exporta tipos de leitura - $inferSelect
 export type User = typeof users.$inferSelect;
 export type Strategy = typeof strategies.$inferSelect;
 export type StrategyLeg = typeof strategyLegs.$inferSelect;
 export type Simulation = typeof simulations.$inferSelect;
 export type SimulationLeg = typeof simulationLegs.$inferSelect;
 export type ExternalAccount = typeof externalAccounts.$inferSelect;
+
+// Exporta tipos de inserção - $inferInsert
+export type InsertUser           = typeof users.$inferInsert;
+export type InsertStrategy       = typeof strategies.$inferInsert;
+export type InsertStrategyLeg    = typeof strategyLegs.$inferInsert;
+export type InsertSimulation     = typeof simulations.$inferInsert;
+export type InsertSimulationLeg  = typeof simulationLegs.$inferInsert;
+export type InsertExternalAccount= typeof externalAccounts.$inferInsert;
