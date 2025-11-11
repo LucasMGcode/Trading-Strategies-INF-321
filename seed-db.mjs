@@ -25,6 +25,7 @@ const marketOutlookMap = {
 
 const volatilityViewMap = {
     HIGH: 'HIGH',
+    NEUTRAL: 'NEUTRAL',
     LOW: 'LOW',
 };
 
