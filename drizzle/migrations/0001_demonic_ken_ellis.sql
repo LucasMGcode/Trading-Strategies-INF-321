@@ -1,0 +1,1 @@
+ALTER TYPE "public"."volatility_view" ADD VALUE 'NEUTRAL' BEFORE 'LOW';

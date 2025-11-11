@@ -36,6 +36,7 @@ export const marketOutlookEnum = pgEnum('market_outlook', [
 // Ambiente de volatilidade esperado para uma estratégia.
 export const volatilityViewEnum = pgEnum('volatility_view', [
     'HIGH',
+    'NEUTRAL',
     'LOW',
 ]);
 
