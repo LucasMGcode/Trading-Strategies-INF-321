@@ -58,7 +58,7 @@ const strikeRelationMap = {
 };
 
 // Diretamente do livro "The Bible of Options Strategies"
-// 23 estratégias principais do capítulo 1 a 7.
+// 27 estratégias principais do capítulo 1 a 7.
 const strategiesData = [
     // Capítulo 1: The Four Basic Options Strategies
     {
