@@ -28,7 +28,7 @@ importers:
         version: 17.2.3
       drizzle-orm:
         specifier: ^0.44.7
-        version: 0.44.7(pg@8.16.3)
+        version: 0.44.7(@types/pg@8.15.6)(pg@8.16.3)
       express:
         specifier: ^4.18.2
         version: 4.21.2
@@ -60,6 +60,9 @@ importers:
       '@types/node':
         specifier: ^24.10.0
         version: 24.10.0
+      '@types/pg':
+        specifier: ^8.15.6
+        version: 8.15.6
       '@vitejs/plugin-react':
         specifier: ^4.2.0
         version: 4.7.0(vite@7.2.2(@types/node@24.10.0)(tsx@4.20.6))
@@ -935,6 +938,9 @@ packages:
 
   '@types/node@24.10.0':
     resolution: {integrity: sha512-qzQZRBqkFsYyaSWXuEHc2WR9c0a0CXwiE5FWUvn7ZM+vdy1uZLfCunD38UzhuB7YN/J11ndbDBcTmOdxJo9Q7A==}
+
+  '@types/pg@8.15.6':
+    resolution: {integrity: sha512-NoaMtzhxOrubeL/7UZuNTrejB4MPAJ0RpxZqXQf2qXuVlTPuG6Y8p4u9dKRaue4yjmC7ZhzVO2/Yyyn25znrPQ==}
 
   '@vitejs/plugin-react@4.7.0':
     resolution: {integrity: sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA==}
@@ -2385,6 +2391,12 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
+  '@types/pg@8.15.6':
+    dependencies:
+      '@types/node': 24.10.0
+      pg-protocol: 1.10.3
+      pg-types: 2.2.0
+
   '@vitejs/plugin-react@4.7.0(vite@7.2.2(@types/node@24.10.0)(tsx@4.20.6))':
     dependencies:
       '@babel/core': 7.28.5
@@ -2529,8 +2541,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.7(pg@8.16.3):
+  drizzle-orm@0.44.7(@types/pg@8.15.6)(pg@8.16.3):
     optionalDependencies:
+      '@types/pg': 8.15.6
       pg: 8.16.3
 
   dunder-proto@1.0.1:
