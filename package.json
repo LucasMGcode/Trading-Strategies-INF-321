@@ -11,6 +11,8 @@
     "build:server": "cd server && tsc",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
+    "db:drop": "drizzle-kit drop",
+    "db:check": "drizzle-kit check",
     "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },
