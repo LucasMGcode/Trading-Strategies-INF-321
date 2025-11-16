@@ -1,3 +1,5 @@
 /private
 .env
 node_modules
+**/dist
+.vscode
