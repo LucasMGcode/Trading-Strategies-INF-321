@@ -30,6 +30,7 @@ export const useAuth = () => {
             } catch (err) {
                 console.error('Erro ao verificar autenticação:', err);
                 localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
                 setUser(null);
                 setError('Falha ao verificar autenticação');
             } finally {
@@ -46,9 +47,12 @@ export const useAuth = () => {
             setError(null);
 
             const response = await apiService.login({ email, password });
-            const { user, accessToken } = response.data;
+            const { user, accessToken, refreshToken } = response.data;
 
             localStorage.setItem('accessToken', accessToken);
+            if (refreshToken) {
+                localStorage.setItem('refreshToken', refreshToken);
+            }
 
             setUser(user);
             return user;
@@ -74,9 +78,12 @@ export const useAuth = () => {
                     experienceLevel,
                 });
 
-                const { user, accessToken } = response.data;
+                const { user, accessToken, refreshToken } = response.data;
 
                 localStorage.setItem('accessToken', accessToken);
+                if (refreshToken) {
+                    localStorage.setItem('refreshToken', refreshToken);
+                }
 
                 setUser(user);
                 return user;
@@ -98,6 +105,7 @@ export const useAuth = () => {
             console.error('Erro ao fazer logout:', err);
         } finally {
             localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
             setUser(null);
         }
     }, []);
