@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES2017",
+    "target": "ES2020",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "useDefineForClassFields": false,
@@ -10,8 +10,14 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
-    "outDir": "./dist",
+    "outDir": "apps/server/dist/",
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist", "test"]
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test"
+  ]
 }
