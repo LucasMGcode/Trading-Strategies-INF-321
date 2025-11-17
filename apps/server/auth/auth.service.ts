@@ -249,12 +249,6 @@ export class AuthService {
     }
 
     /**
-     * ============================================================================
-     * MÉTODOS AUXILIARES
-     * ============================================================================
-     */
-
-    /**
      * Hash de senha com bcrypt
      */
     private async hashPassword(password: string): Promise<string> {
