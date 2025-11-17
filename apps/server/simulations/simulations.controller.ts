@@ -17,10 +17,10 @@ import {
 import {
     SimulationsService,
     PaginationOptions,
-    CreateSimulationDto,
-    UpdateSimulationDto,
-    CreateSimulationLegDto,
 } from './simulations.service';
+import { CreateSimulationDto } from './dto/create-simulation.dto';
+import { UpdateSimulationDto } from './dto/update-simulation.dto';
+import { CreateSimulationLegDto } from './dto/create-simulation-leg.dto';
 
 /**
  * Controller para gerenciar simulações

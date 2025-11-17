@@ -6,6 +6,9 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { db, SelectSimulation, InsertSimulation, SelectSimulationLeg } from '../db';
 import { eq, desc, asc } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
+import { CreateSimulationDto } from './dto/create-simulation.dto';
+import { UpdateSimulationDto } from './dto/update-simulation.dto';
+import { CreateSimulationLegDto } from './dto/create-simulation-leg.dto';
 
 /**
  * Interface para opções de paginação
@@ -14,44 +17,6 @@ export interface PaginationOptions {
     limit?: number;
     offset?: number;
     orderBy?: 'recent' | 'oldest';
-}
-
-/**
- * DTO para criar simulação
- */
-export class CreateSimulationDto {
-    userId: string;
-    strategyId: string;
-    assetSymbol: string;
-    simulationName: string;
-    startDate: Date;
-    endDate: Date;
-    initialCapital: string;
-}
-
-/**
- * DTO para atualizar simulação
- */
-export class UpdateSimulationDto {
-    simulationName?: string;
-    totalReturn?: string;
-    returnPercentage?: string;
-    maxDrawdown?: string;
-}
-
-/**
- * DTO para criar perna de simulação
- */
-export class CreateSimulationLegDto {
-    simulationId: string;
-    instrumentType: 'CALL' | 'PUT' | 'STOCK';
-    action: 'BUY' | 'SELL';
-    quantity: number;
-    entryPrice: string;
-    exitPrice?: string;
-    entryDate: Date;
-    exitDate?: Date;
-    profitLoss?: string;
 }
 
 @Injectable()
