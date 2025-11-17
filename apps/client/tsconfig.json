@@ -1,4 +1,5 @@
 {
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "target": "ES2020",
         "useDefineForClassFields": true,
@@ -8,16 +9,11 @@
             "DOM.Iterable"
         ],
         "module": "ESNext",
-        "skipLibCheck": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
         "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,
-        "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": true,
         "jsx": "react-jsx",
-        "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,

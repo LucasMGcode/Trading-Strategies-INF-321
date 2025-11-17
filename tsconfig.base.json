@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        // Configurações básicas para todo o monorepo
+        "target": "ES2020",
+        "module": "commonjs", // Padrão para Node.js, será sobrescrito pelo cliente
+        "moduleResolution": "node", // Padrão para Node.js, será sobrescrito pelo cliente
+        "lib": [
+            "ES2020"
+        ],
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "rootDir": ".",
+        "baseUrl": ".",
+        "paths": {
+            // Mapeamento de caminhos comuns para bibliotecas ou módulos compartilhados (se houver)
+            // Exemplo: "@monorepo/*": ["packages/*/src"]
+        }
+    }
+}

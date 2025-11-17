@@ -4,7 +4,11 @@
  */
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { AppModule } from './app.module'
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+import { AppModule } from './app.module';
+
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
@@ -46,7 +50,7 @@ async function bootstrap() {
     ║   Documentação: http://localhost:${port}/api/docs             ║
     ║                                                            ║
     ╚════════════════════════════════════════════════════════════╝
-    `);
+    ` );
     });
 }
 
