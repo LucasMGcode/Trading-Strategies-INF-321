@@ -8,16 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { db, SelectUser, InsertUser } from '../db';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
-
-/**
- * DTO para registro de usuário
- */
-export class RegisterDto {
-    username!: string;
-    email!: string;
-    password!: string;
-    experienceLevel?: 'NOVICE' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
-}
+import { RegisterDto } from './dto/register.dto';
 
 /**
  * DTO para login

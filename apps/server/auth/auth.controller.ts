@@ -2,6 +2,7 @@
  * Controller responsável por gerenciar as rotas relacionadas a autenticação.
  * Define os endpoints REST para registro, login, logout e gerenciamento de sessão.
  */
+import { RegisterDto } from './dto/register.dto';
 import {
     Controller,
     Post,
@@ -14,7 +15,6 @@ import {
 } from '@nestjs/common';
 import {
     AuthService,
-    RegisterDto,
     LoginDto,
     ChangePasswordDto,
 } from './auth.service';
@@ -56,6 +56,14 @@ export class AuthController {
     @Post('register')
     @HttpCode(HttpStatus.CREATED)
     async register(@Body() registerDto: RegisterDto) {
+        console.log('[AuthController] DTO recebido no controller:', registerDto);
+        console.log('[AuthController] tipos:', {
+            username: typeof (registerDto as any).username,
+            email: typeof (registerDto as any).email,
+            password: typeof (registerDto as any).password,
+            experienceLevel: typeof (registerDto as any).experienceLevel,
+        });
+
         return this.authService.register(registerDto);
     }
 
