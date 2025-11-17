@@ -1,0 +1,16 @@
+{
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "apps/server",
+    "root": "apps/server",
+    "compilerOptions": {
+        "tsConfigPath": "apps/server/tsconfig.json",
+        "entryFile": "main",
+        "assets": [
+            {
+                "include": "../**/*.env",
+                "exclude": "**/node_modules"
+            }
+        ],
+        "watchAssets": true
+    }
+}
