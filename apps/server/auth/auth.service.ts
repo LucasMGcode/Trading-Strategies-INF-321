@@ -9,14 +9,7 @@ import { db, SelectUser, InsertUser } from '../db';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
 import { RegisterDto } from './dto/register.dto';
-
-/**
- * DTO para login
- */
-export class LoginDto {
-    email!: string;
-    password!: string;
-}
+import { LoginDto } from './dto/login.dto';
 
 /**
  * DTO para atualizar senha

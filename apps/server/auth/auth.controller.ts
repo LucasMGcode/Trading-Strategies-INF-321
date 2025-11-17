@@ -3,6 +3,7 @@
  * Define os endpoints REST para registro, login, logout e gerenciamento de sessão.
  */
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 import {
     Controller,
     Post,
@@ -15,7 +16,6 @@ import {
 } from '@nestjs/common';
 import {
     AuthService,
-    LoginDto,
     ChangePasswordDto,
 } from './auth.service';
 
@@ -87,6 +87,8 @@ export class AuthController {
     @Post('login')
     @HttpCode(HttpStatus.OK)
     async login(@Body() loginDto: LoginDto) {
+        console.log('[AuthController] login DTO:', loginDto);
+
         return this.authService.login(loginDto);
     }
 
