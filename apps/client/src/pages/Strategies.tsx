@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useStrategies } from '@/hooks/useStrategies';
 import { Search, Filter } from 'lucide-react';
@@ -11,14 +11,19 @@ export default function Strategies() {
         riskProfile: '',
     });
 
-    const { strategies, loading, error } = useStrategies(
-        Object.keys(filters).reduce((acc, key) => {
-            if (filters[key as keyof typeof filters]) {
-                acc[key as keyof typeof filters] = filters[key as keyof typeof filters];
-            }
-            return acc;
-        }, {} as typeof filters)
+    const activeFilters = useMemo(
+        () =>
+            Object.keys(filters).reduce((acc, key) => {
+                const value = filters[key as keyof typeof filters];
+                if (value) {
+                    acc[key as keyof typeof filters] = value;
+                }
+                return acc;
+            }, {} as Partial<typeof filters>),
+        [filters],
     );
+
+    const { strategies, loading, error } = useStrategies(activeFilters);
 
     const handleFilterChange = (key: string, value: string) => {
         setFilters((prev) => ({

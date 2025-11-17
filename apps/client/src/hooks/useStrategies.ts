@@ -25,7 +25,7 @@ export interface StrategyFilters {
     strategyType?: string;
 }
 
-export const useStrategies = (filters?: StrategyFilters) => {
+export const useStrategies = (filters: StrategyFilters = {}) => {
     const [strategies, setStrategies] = useState<Strategy[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -38,7 +38,8 @@ export const useStrategies = (filters?: StrategyFilters) => {
             const response = await apiService.getStrategies(filters);
             setStrategies(response.data);
         } catch (err: any) {
-            const errorMessage = err.response?.data?.message || 'Erro ao buscar estratégias';
+            const errorMessage =
+                err.response?.data?.message || 'Erro ao buscar estratégias';
             setError(errorMessage);
             console.error('Erro ao buscar estratégias:', err);
         } finally {
