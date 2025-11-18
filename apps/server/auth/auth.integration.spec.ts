@@ -3,6 +3,21 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import supertest from 'supertest';
 import { AppModule } from '../app.module';
 import { ExperienceLevel } from './dto/register.dto';
+import { db } from '../db';
+import * as schema from '../../../drizzle/schema';
+import { eq } from 'drizzle-orm';
+
+/*
+- 200 OK: A requisição foi bem-sucedida.
+- 201 Created: Um novo recurso foi criado com sucesso.
+- 301 Moved Permanently: O recurso foi movido permanentemente para um novo endereço (redirecionamento).
+- 400 Bad Request: A requisição do cliente é inválida ou malformada.
+- 401 Unauthorized: O usuário não está autenticado e não tem permissão para acessar o recurso.
+- 403 Forbidden: O servidor nega o acesso ao recurso, independentemente da autenticação.
+- 404 Not Found: O recurso solicitado não foi encontrado no servidor.
+- 500 Internal Server Error: Um erro genérico interno ocorreu no servidor.
+- 503 Service Unavailable: O servidor está temporariamente indisponível (sobrecarga ou manutenção).
+*/
 
 describe('Autenticação Testes de Integração', () => {
     let app: INestApplication;
@@ -27,6 +42,8 @@ describe('Autenticação Testes de Integração', () => {
     });
 
     afterAll(async () => {
+        await db.delete(schema.users).where(eq(schema.users.email, usuarioEmail));
+        await db.delete(schema.users).where(eq(schema.users.email, 'EmailFake@Cobol.com'));
         await app.close();
     });
 
@@ -70,7 +87,7 @@ describe('Autenticação Testes de Integração', () => {
                 .post('/api/auth/register')
                 .send({
                     username: 'Erdna',
-                    email: 'EmailFake@Cobol.com',
+                    email: '@EmailFakeCobol.com',
                     password: '******',
                     experienceLevel: ExperienceLevel.INTERMEDIATE,
                 })
@@ -152,16 +169,11 @@ describe('Autenticação Testes de Integração', () => {
         });
 
         it('Deve falhar sem token.', () => {
-            return supertest(app.getHttpServer())
-                .get('/api/auth/me')
-                .expect(500);
+            return supertest(app.getHttpServer()).get('/api/auth/me').expect(500);
         });
 
         it('Deve falhar com token inválido.', () => {
-            return supertest(app.getHttpServer())
-                .get('/api/auth/me')
-                .set('Authorization', 'Bearer invalid_token')
-                .expect(401);
+            return supertest(app.getHttpServer()).get('/api/auth/me').set('Authorization', 'Bearer invalid_token').expect(401);
         });
     });
 
@@ -187,7 +199,7 @@ describe('Autenticação Testes de Integração', () => {
                 })
                 .expect(201)
                 .expect((res) => {
-                    expect(res.body).toHaveProperty([], { "message": "Senha alterada com sucesso" });
+                    expect(res.body).toEqual({ message: "Senha alterada com sucesso" });
                 });
         });
 
@@ -199,17 +211,17 @@ describe('Autenticação Testes de Integração', () => {
                     currentPassword: 'SenhaIncorreta@404',
                     newPassword: 'QualquerOutraSenha_@777',
                 })
-                .expect(400);
+                .expect(401);
         });
 
-        it('Deve falhar sem autenticação.', () => {
+        it("Deve falhar sem autenticação.", () => {
             return supertest(app.getHttpServer())
-                .post('/api/auth/change-password')
+                .post("/api/auth/change-password")
                 .send({
                     currentPassword: usuarioPass,
-                    newPassword: 'Nov4_S3nha!@2',
+                    newPassword: "Nov4_S3nha!@2",
                 })
-                .expect(500);
+                .expect(401);
         });
     });
 });

@@ -14,6 +14,7 @@ import {
     Headers,
     HttpCode,
     HttpStatus,
+    UnauthorizedException,
 } from '@nestjs/common';
 
 /**
@@ -141,7 +142,7 @@ export class AuthController {
         @Body() changePasswordDto: ChangePasswordDto,
     ) {
         if (!authHeader) {
-            throw new Error('Authorization header is required');
+            throw new UnauthorizedException('Authorization header is required');
         }
 
         const token = authHeader.replace('Bearer ', '');
