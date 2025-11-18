@@ -5,19 +5,12 @@
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { db, SelectUser, InsertUser } from '../db';
+import { db, SelectUser } from '../db';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-
-/**
- * DTO para atualizar senha
- */
-export class ChangePasswordDto {
-    currentPassword!: string;
-    newPassword!: string;
-}
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 /**
  * Interface para payload do JWT

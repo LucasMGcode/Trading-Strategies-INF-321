@@ -4,20 +4,17 @@
  */
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { AuthService } from './auth.service';
 import {
     Controller,
     Post,
     Get,
     Body,
-    Param,
     Headers,
     HttpCode,
     HttpStatus,
 } from '@nestjs/common';
-import {
-    AuthService,
-    ChangePasswordDto,
-} from './auth.service';
 
 /**
  * Controller para gerenciar autenticação
