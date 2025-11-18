@@ -164,17 +164,11 @@ export class AuthService {
     ): Promise<{ message: string }> {
         try {
             const user = await this.getCurrentUser(userId);
-
-            const isPasswordValid = await this.verifyPassword(
-                changePasswordDto.currentPassword,
-                user.passwordHash,
-            );
+            const isPasswordValid = await this.verifyPassword(changePasswordDto.currentPassword, user.passwordHash);
             if (!isPasswordValid) {
-                throw new BadRequestException('Senha atual inválida');
+                throw new UnauthorizedException('Senha atual inválida');
             }
-
             const newPasswordHash = await this.hashPassword(changePasswordDto.newPassword);
-
             await db
                 .update(schema.users)
                 .set({
@@ -182,9 +176,7 @@ export class AuthService {
                     updatedAt: new Date(),
                 })
                 .where(eq(schema.users.id, userId));
-
             console.log(`[AuthService] Senha alterada para usuário: ${userId}`);
-
             return { message: 'Senha alterada com sucesso' };
         } catch (error) {
             if (

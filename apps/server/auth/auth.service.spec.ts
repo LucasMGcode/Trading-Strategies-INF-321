@@ -37,8 +37,8 @@ describe('Autenticação Testes Service', () => {
     };
 
     beforeEach(async () => {
-        await db.delete(schema.users).where(eq(schema.users.email, 'Capivasco@ufv.br'));
         await db.delete(schema.users).where(eq(schema.users.email, usuarioEmail));
+        await db.delete(schema.users).where(eq(schema.users.email, 'Capivasco@ufv.br'));
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 AuthService,
@@ -112,6 +112,7 @@ describe('Autenticação Testes Service', () => {
         });
 
         it('Deve lançar UnauthorizedException se a senha estiver incorreta.', async () => {
+            const consoleErroSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             const loginDto = {
                 email: usuarioEmail,
                 password: 'Senha_errada!',
@@ -121,6 +122,7 @@ describe('Autenticação Testes Service', () => {
             (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
             await expect(service.login(loginDto)).rejects.toBeInstanceOf(UnauthorizedException);
+            consoleErroSpy.mockRestore();
         });
 
         it('Deve lançar UnauthorizedException se o usuário não for encontrado.', async () => {
@@ -146,11 +148,13 @@ describe('Autenticação Testes Service', () => {
         });
 
         it('Deve lançar UnauthorizedException para token inválido.', async () => {
+            const consoleErroSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             const token = 'invalid_token';
             (jwtService.verify as jest.Mock).mockImplementationOnce(() => {
                 throw new Error('Token inválido');
             });
             await expect(service.validateToken(token)).rejects.toBeInstanceOf(UnauthorizedException);
+            consoleErroSpy.mockRestore();
         });
     });
 
