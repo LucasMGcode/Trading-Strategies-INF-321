@@ -22,7 +22,7 @@ export default function Login() {
             setIsLoading(true);
             await login(email, password);
             toast.success('Login realizado com sucesso!');
-            navigate('/dashboard');
+            navigate('/Dashboard'); // TODO Verificar motivo pelo qual só está funcionando com D maiúsculo
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Erro ao fazer login';
             toast.error(errorMessage);
