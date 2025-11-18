@@ -13,7 +13,9 @@ import {
     HttpCode,
     HttpStatus,
 } from '@nestjs/common';
-import { UsersService, UpdateProfileDto, CreateUserDto } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UsersService } from './users.service';
 
 /**
  * Controller para gerenciar usuários

@@ -6,25 +6,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { db, SelectUser, InsertUser } from '../../server/db';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
-
-/**
- * DTO para atualizar perfil de usuário
- */
-export class UpdateProfileDto {
-    username!: string;
-    email!: string;
-    experienceLevel?: 'NOVICE' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
-}
-
-/**
- * DTO para criar usuário
- */
-export class CreateUserDto {
-    username!: string;
-    email!: string;
-    passwordHash!: string;
-    experienceLevel?: 'NOVICE' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
-}
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
