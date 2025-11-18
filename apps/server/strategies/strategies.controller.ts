@@ -14,7 +14,10 @@ import {
     HttpCode,
     HttpStatus,
 } from '@nestjs/common';
-import { StrategiesService, StrategyFilters, CreateStrategyDto, UpdateStrategyDto, CreateStrategyLegDto } from './strategies.service';
+import { CreateStrategyDto } from './dto/create-strategy.dto';
+import { UpdateStrategyDto } from './dto/update-strategy.dto';
+import { CreateStrategyLegDto } from './dto/create-strategy-leg.dto';
+import { StrategiesService, StrategyFilters } from './strategies.service';
 
 /**
  * Controller para gerenciar estratégias

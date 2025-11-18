@@ -6,6 +6,9 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { db, SelectStrategy, InsertStrategy, SelectStrategyLeg } from '../db';
 import { eq, and, asc } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
+import { CreateStrategyDto } from './dto/create-strategy.dto';
+import { UpdateStrategyDto } from './dto/update-strategy.dto';
+import { CreateStrategyLegDto } from './dto/create-strategy-leg.dto';
 
 /**
  * Interface para filtros de estratégia
@@ -17,47 +20,6 @@ export interface StrategyFilters {
     riskProfile?: 'CAPPED' | 'UNCAPPED';
     rewardProfile?: 'CAPPED' | 'UNCAPPED';
     strategyType?: 'CAPITAL_GAIN' | 'INCOME' | 'PROTECTION';
-}
-
-/**
- * DTO para criar estratégia
- */
-export class CreateStrategyDto {
-    name: string;
-    summary?: string;
-    description?: string;
-    proficiencyLevel: 'NOVICE' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
-    marketOutlook: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-    volatilityView: 'HIGH' | 'NEUTRAL' | 'LOW';
-    riskProfile: 'CAPPED' | 'UNCAPPED';
-    rewardProfile: 'CAPPED' | 'UNCAPPED';
-    strategyType: 'CAPITAL_GAIN' | 'INCOME' | 'PROTECTION';
-}
-
-/**
- * DTO para atualizar estratégia
- */
-export class UpdateStrategyDto {
-    name?: string;
-    summary?: string;
-    description?: string;
-    proficiencyLevel?: 'NOVICE' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
-    marketOutlook?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-    volatilityView?: 'HIGH' | 'NEUTRAL' | 'LOW';
-    riskProfile?: 'CAPPED' | 'UNCAPPED';
-    rewardProfile?: 'CAPPED' | 'UNCAPPED';
-    strategyType?: 'CAPITAL_GAIN' | 'INCOME' | 'PROTECTION';
-}
-
-/**
- * DTO para criar perna de estratégia
- */
-export class CreateStrategyLegDto {
-    strategyId: string;
-    action: 'BUY' | 'SELL';
-    instrumentType: 'CALL' | 'PUT' | 'STOCK';
-    quantityRatio: number;
-    strikeRelation: 'ATM' | 'ITM' | 'OTM';
 }
 
 @Injectable()
