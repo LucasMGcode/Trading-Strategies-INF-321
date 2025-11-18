@@ -39,16 +39,11 @@ export class AuthService {
      */
     async register(registerDto: RegisterDto): Promise<AuthResponse> {
         try {
-            // Verificar se email já existe
             const existingUser = await this.getUserByEmail(registerDto.email);
             if (existingUser) {
                 throw new BadRequestException('Email já está em uso');
             }
-
-            // Hash da senha
             const passwordHash = await this.hashPassword(registerDto.password);
-
-            // Criar usuário
             const [user] = await db
                 .insert(schema.users)
                 .values({
@@ -61,7 +56,6 @@ export class AuthService {
 
             console.log(`[AuthService] Novo usuário registrado: ${user.id}`);
 
-            // Gerar tokens
             const accessToken = this.generateAccessToken(user);
             const refreshToken = this.generateRefreshToken(user);
 
@@ -84,13 +78,11 @@ export class AuthService {
      */
     async login(loginDto: LoginDto): Promise<AuthResponse> {
         try {
-            // Buscar usuário por email
             const user = await this.getUserByEmail(loginDto.email);
             if (!user) {
                 throw new UnauthorizedException('Email ou senha inválidos');
             }
 
-            // Verificar senha
             const isPasswordValid = await this.verifyPassword(
                 loginDto.password,
                 user.passwordHash,
@@ -99,7 +91,6 @@ export class AuthService {
                 throw new UnauthorizedException('Email ou senha inválidos');
             }
 
-            // Atualizar lastSignedIn
             await db
                 .update(schema.users)
                 .set({ updatedAt: new Date() })
@@ -107,7 +98,6 @@ export class AuthService {
 
             console.log(`[AuthService] Usuário fez login: ${user.id}`);
 
-            // Gerar tokens
             const accessToken = this.generateAccessToken(user);
             const refreshToken = this.generateRefreshToken(user);
 
@@ -173,10 +163,8 @@ export class AuthService {
         changePasswordDto: ChangePasswordDto,
     ): Promise<{ message: string }> {
         try {
-            // Obter usuário
             const user = await this.getCurrentUser(userId);
 
-            // Verificar senha atual
             const isPasswordValid = await this.verifyPassword(
                 changePasswordDto.currentPassword,
                 user.passwordHash,
@@ -185,10 +173,8 @@ export class AuthService {
                 throw new BadRequestException('Senha atual inválida');
             }
 
-            // Hash da nova senha
             const newPasswordHash = await this.hashPassword(changePasswordDto.newPassword);
 
-            // Atualizar senha
             await db
                 .update(schema.users)
                 .set({
