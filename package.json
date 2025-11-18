@@ -16,7 +16,16 @@
     "lint": "eslint .",
     "start:dev": "pnpm run dev",
     "start": "node apps/server/dist/main.js",
-    "start:prod": "node apps/server/dist/main.js"
+    "start:prod": "node apps/server/dist/main.js",
+    "test": "jest --config jest.config.js",
+    "test:watch": "jest --config jest.config.js --watch",
+    "test:coverage": "jest --config jest.config.js --coverage",
+    "test:server": "jest --config jest.config.js apps/server",
+    "test:client": "vitest --config vitest.config.ts",
+    "test:client:watch": "vitest --config vitest.config.ts --watch",
+    "test:client:coverage": "vitest --config vitest.config.ts --coverage",
+    "test:e2e": "playwright test",
+    "test:all": "pnpm run test:server && pnpm run test:client"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.9",
