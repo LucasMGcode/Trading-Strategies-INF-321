@@ -23,14 +23,15 @@ describe('Estratégias Testes Service', () => {
     let service: StrategiesService;
 
     const estrategiaId = '00000000-0000-0000-0000-000000000001';
-    const estrategiaNome = 'Long Call';
-    const pernaId = '00000000-0000-0000-0000-000000000101';
+
+    const estrategiaNome = 'Tester Call Iron';
+    const pernaId = '00000000-0000-0000-0000-000000000010';
 
     const mockEstrategia = {
         id: estrategiaId,
         name: estrategiaNome,
-        summary: 'Compra de uma call',
-        description: 'Estratégia bullish com risco limitado',
+        summary: 'Testa a Call',
+        description: 'Estratégia bullshit com risco ilimitado',
         proficiencyLevel: ProficiencyLevel.NOVICE,
         marketOutlook: MarketOutlook.BULLISH,
         volatilityView: VolatilityView.HIGH,
@@ -53,10 +54,10 @@ describe('Estratégias Testes Service', () => {
     };
 
     beforeEach(async () => {
-        await db.delete(schema.strategyLegs).where(eq(schema.strategyLegs.strategyId, '00000000-0000-0000-0000-000000000001'));
-        await db.delete(schema.strategyLegs).where(eq(schema.strategyLegs.strategyId, '00000000-0000-0000-0000-000000000002'));
-        await db.delete(schema.strategyLegs).where(eq(schema.strategyLegs.strategyId, '00000000-0000-0000-0000-000000000003'));
-
+        await db.delete(schema.strategies).where(eq(schema.strategies.id, estrategiaId));
+        await db.delete(schema.strategies).where(eq(schema.strategies.id, '00000000-0000-0000-0000-000000000002'));
+        await db.delete(schema.strategies).where(eq(schema.strategies.id, '00000000-0000-0000-0000-000000000003'));
+        await db.delete(schema.strategyLegs).where(eq(schema.strategyLegs.strategyId, pernaId));
         const module: TestingModule = await Test.createTestingModule({
             providers: [StrategiesService],
         }).compile();
@@ -64,7 +65,8 @@ describe('Estratégias Testes Service', () => {
         service = module.get<StrategiesService>(StrategiesService);
     });
 
-    afterEach(async () => {});
+    afterEach(async () => {
+    });
 
     describe('Obter todas as estratégias, getAllStrategies', () => {
         it('Deve retornar todas as estratégias sem filtros.', async () => {
