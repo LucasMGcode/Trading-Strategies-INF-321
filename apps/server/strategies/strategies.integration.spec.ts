@@ -2,7 +2,7 @@
  * Testes de integração - Estratégias
  */
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import supertest from 'supertest';
 import { AppModule } from '../app.module';
 import { db } from '../db';
@@ -16,37 +16,48 @@ import {
     RewardProfile,
     StrategyType,
 } from './dto/create-strategy.dto';
+import { InstrumentType } from '../simulations/dto/create-simulation-leg.dto';
+import { StrategyInstrumentType, StrategyLegAction, StrikeRelation } from './dto/create-strategy-leg.dto';
 
 describe('Estratégias Testes de Integração', () => {
     let app: INestApplication;
     let estrategiaId: string;
 
+    const UUID_INEXISTENTE = '123e4567-e89b-12d3-a456-426614174000';
+    const estrategiaSummary = 'Level 8, Ataque 3000, Defesa 2500, Tipo Condor/Light/Normal';
+    const estrategiaDescription = 'Este Condor lendário é uma poderosa máquina de destruição. Praticamente invencível, muito poucos enfrentaram esta magnífica criatura e viveram para contar a história.';
+
     const estrategiaParaTeste = {
-        name: 'Test Long Call',
-        summary: 'Compra de uma call para teste',
-        description: 'Estratégia bullish com risco limitado para testes',
-        proficiencyLevel: ProficiencyLevel.NOVICE,
-        marketOutlook: MarketOutlook.BULLISH,
+        name: 'Blue Eyes Iron Condor',
+        summary: estrategiaSummary,
+        description: estrategiaDescription,
+        proficiencyLevel: ProficiencyLevel.ADVANCED,
+        marketOutlook: MarketOutlook.BEARISH,
         volatilityView: VolatilityView.HIGH,
         riskProfile: RiskProfile.CAPPED,
-        rewardProfile: RewardProfile.UNCAPPED,
-        strategyType: StrategyType.CAPITAL_GAIN,
+        rewardProfile: RewardProfile.CAPPED,
+        strategyType: StrategyType.PROTECTION,
     };
 
     beforeAll(async () => {
-        const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [AppModule],
-        }).compile();
-
+        const moduleFixture: TestingModule = await Test.createTestingModule({ imports: [AppModule], }).compile();
         app = moduleFixture.createNestApplication();
+
+        app.setGlobalPrefix('api');
+        app.useGlobalPipes(
+            new ValidationPipe({
+                whitelist: true,
+                forbidNonWhitelisted: true,
+                transform: true,
+            }),
+        );
+
         await app.init();
     });
 
     afterAll(async () => {
-        if (estrategiaId) {
-            await db.delete(schema.strategyLegs).where(eq(schema.strategyLegs.strategyId, estrategiaId));
-            await db.delete(schema.strategies).where(eq(schema.strategies.id, estrategiaId));
-        }
+        await db.delete(schema.strategies).where(eq(schema.strategies.summary, estrategiaSummary));
+        await db.delete(schema.strategies).where(eq(schema.strategies.summary, 'Resumo atualizado via API'));
         await app.close();
     });
 
@@ -117,7 +128,7 @@ describe('Estratégias Testes de Integração', () => {
                     expect(res.body).toHaveProperty('id');
                     expect(res.body).toHaveProperty('name', estrategiaParaTeste.name);
                     expect(res.body).toHaveProperty('summary', estrategiaParaTeste.summary);
-                    expect(res.body).toHaveProperty('proficiencyLevel', ProficiencyLevel.NOVICE);
+                    expect(res.body).toHaveProperty('proficiencyLevel', estrategiaParaTeste.proficiencyLevel);
                     estrategiaId = res.body.id;
                 });
         });
@@ -176,7 +187,7 @@ describe('Estratégias Testes de Integração', () => {
         });
     });
 
-    describe('PUT /api/strategies/:id', () => {
+    describe('PATCH /api/strategies/:id', () => {
         it('Deve atualizar uma estratégia existente.', () => {
             const atualizacao = {
                 summary: 'Resumo atualizado via API',
@@ -184,7 +195,7 @@ describe('Estratégias Testes de Integração', () => {
             };
 
             return supertest(app.getHttpServer())
-                .put(`/api/strategies/${estrategiaId}`)
+                .patch(`/api/strategies/${estrategiaId}`)
                 .send(atualizacao)
                 .expect(200)
                 .expect((res) => {
@@ -201,7 +212,7 @@ describe('Estratégias Testes de Integração', () => {
             };
 
             return supertest(app.getHttpServer())
-                .put(`/api/strategies/${idInexistente}`)
+                .patch(`/api/strategies/${idInexistente}`)
                 .send(atualizacao)
                 .expect(404);
         });
@@ -257,69 +268,77 @@ describe('Estratégias Testes de Integração', () => {
         });
     });
 
-    describe('POST /api/strategies/:id/legs', () => {
-        const pernaParaTeste = {
-            legType: 'LONG_CALL',
-            position: 'LONG',
-            optionType: 'CALL',
-            strikePrice: 100,
-            quantity: 1,
-        };
-
-        it('Deve adicionar uma perna a uma estratégia.', () => {
+    describe('POST /api/strategies/legs', () => {
+        it('Deve adicionar uma perna a uma estratégia.', async () => {
+            const pernaParaTeste = {
+                strategyId: estrategiaId,
+                action: StrategyLegAction.BUY,
+                instrumentType: StrategyInstrumentType.CALL,
+                quantityRatio: 100,
+                strikeRelation: StrikeRelation.ATM,
+            };
             return supertest(app.getHttpServer())
-                .post(`/api/strategies/${estrategiaId}/legs`)
+                .post('/api/strategies/legs')
                 .send(pernaParaTeste)
                 .expect(201)
                 .expect((res) => {
                     expect(res.body).toHaveProperty('id');
                     expect(res.body).toHaveProperty('strategyId', estrategiaId);
-                    expect(res.body).toHaveProperty('legType', pernaParaTeste.legType);
-                    expect(res.body).toHaveProperty('strikePrice', pernaParaTeste.strikePrice);
+                    expect(res.body).toHaveProperty('action', pernaParaTeste.action);
+                    expect(res.body).toHaveProperty('instrumentType', pernaParaTeste.instrumentType);
+                    expect(res.body).toHaveProperty('quantityRatio', pernaParaTeste.quantityRatio);
+                    expect(res.body).toHaveProperty('strikeRelation', pernaParaTeste.strikeRelation);
                 });
         });
 
         it('Deve retornar erro 404 ao adicionar perna a estratégia inexistente.', () => {
-            const idInexistente = '99999999-9999-9999-9999-999999999999';
+            const pernaParaTesteInexistente = {
+                strategyId: UUID_INEXISTENTE,
+                action: StrategyLegAction.SELL,
+                instrumentType: StrategyInstrumentType.PUT,
+                quantityRatio: 1,
+                strikeRelation: StrikeRelation.ITM,
+            };
 
             return supertest(app.getHttpServer())
-                .post(`/api/strategies/${idInexistente}/legs`)
-                .send(pernaParaTeste)
+                .post('/api/strategies/legs')
+                .send(pernaParaTesteInexistente)
                 .expect(404);
         });
 
         it('Deve retornar erro 400 se dados obrigatórios faltarem.', () => {
             const pernaIncompleta = {
-                legType: 'LONG_CALL',
-                // Faltam outros campos obrigatórios
+                strategyId: estrategiaId,
             };
 
             return supertest(app.getHttpServer())
-                .post(`/api/strategies/${estrategiaId}/legs`)
+                .post('/api/strategies/legs')
                 .send(pernaIncompleta)
                 .expect(400);
         });
     });
 
-    describe('DELETE /api/strategies/:strategyId/legs/:legId', () => {
+    describe('DELETE /api/strategies/legs/:legId', () => {
         let pernaId: string;
 
         beforeEach(async () => {
             const res = await supertest(app.getHttpServer())
-                .post(`/api/strategies/${estrategiaId}/legs`)
+                .post('/api/strategies/legs')
                 .send({
-                    legType: 'LONG_CALL',
-                    position: 'LONG',
-                    optionType: 'CALL',
-                    strikePrice: 100,
-                    quantity: 1,
-                });
+                    strategyId: estrategiaId,
+                    action: StrategyLegAction.BUY,
+                    instrumentType: StrategyInstrumentType.CALL,
+                    quantityRatio: 1,
+                    strikeRelation: StrikeRelation.ATM,
+                })
+                .expect(201);
+
             pernaId = res.body.id;
         });
 
         it('Deve deletar uma perna de estratégia.', () => {
             return supertest(app.getHttpServer())
-                .delete(`/api/strategies/${estrategiaId}/legs/${pernaId}`)
+                .delete(`/api/strategies/legs/${pernaId}`)
                 .expect(200)
                 .expect((res) => {
                     expect(res.body).toEqual({ message: 'Perna deletada com sucesso' });
@@ -327,10 +346,8 @@ describe('Estratégias Testes de Integração', () => {
         });
 
         it('Deve retornar erro 404 ao deletar perna inexistente.', () => {
-            const idInexistente = '99999999-9999-9999-9999-999999999999';
-
             return supertest(app.getHttpServer())
-                .delete(`/api/strategies/${estrategiaId}/legs/${idInexistente}`)
+                .delete(`/api/strategies/legs/${UUID_INEXISTENTE}`)
                 .expect(404);
         });
     });

@@ -189,6 +189,7 @@ export class StrategiesService {
      */
     async getStrategyLegs(strategyId: string): Promise<SelectStrategyLeg[]> {
         try {
+            await this.getStrategyById(strategyId);
             const legs = await db
                 .select()
                 .from(schema.strategyLegs)
@@ -196,6 +197,9 @@ export class StrategiesService {
 
             return legs;
         } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
             console.error('[StrategiesService] Erro ao obter pernas:', error);
             throw new BadRequestException('Erro ao obter pernas da estratégia');
         }
