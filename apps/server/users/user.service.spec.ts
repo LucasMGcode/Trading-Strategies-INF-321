@@ -30,6 +30,7 @@ describe('Usuários Testes Service', () => {
     };
 
     beforeEach(async () => {
+        await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
         await db.delete(schema.users).where(eq(schema.users.email, usuarioEmail));
 
         const module: TestingModule = await Test.createTestingModule({
@@ -51,6 +52,7 @@ describe('Usuários Testes Service', () => {
             expect(resultado).toHaveProperty('username', usuarioUsername);
             expect(resultado).toHaveProperty('email', usuarioEmail);
             expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.NOVICE);
+
             await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
         });
 
@@ -74,6 +76,8 @@ describe('Usuários Testes Service', () => {
             expect(resultado).toHaveProperty('experienceLevel');
             expect(resultado).toHaveProperty('createdAt');
             expect(resultado).toHaveProperty('updatedAt');
+
+            await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
         });
     });
 
@@ -86,6 +90,7 @@ describe('Usuários Testes Service', () => {
             expect(resultado).not.toBeNull();
             expect(resultado).toHaveProperty('id', usuarioId);
             expect(resultado).toHaveProperty('email', usuarioEmail);
+
             await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
         });
 
@@ -97,12 +102,13 @@ describe('Usuários Testes Service', () => {
             expect(resultado).toBeNull();
         });
 
-        it('Deve ser case-sensitive na busca por email.', async () => {
+        it('Deve lidar corretamente com variação de caixa no email.', async () => {
             await db.insert(schema.users).values(mockUsuario);
 
             const resultado = await service.getUserByEmail(usuarioEmail.toUpperCase());
 
             expect(resultado === null || resultado?.email === usuarioEmail).toBe(true);
+
             await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
         });
     });
@@ -112,56 +118,75 @@ describe('Usuários Testes Service', () => {
             const createNewUserNome = 'Jimmy Page';
             const createNewUserEmail = 'jimmy.page@ramble.on';
             const createNewUserPass = '!Heartbreaker_1969';
-            const createUserDto: CreateUserDto = {
-                username: createNewUserNome,
-                email: createNewUserEmail,
-                passwordHash: bcrypt.hashSync(createNewUserPass, 10),
-                experienceLevel: ExperienceLevel.INTERMEDIATE,
-            };
 
-            const resultado = await service.createUser(createUserDto);
-
-            expect(resultado).toHaveProperty('id');
-            expect(resultado).toHaveProperty('username', createNewUserNome);
-            expect(resultado).toHaveProperty('email', createNewUserEmail);
-            expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.INTERMEDIATE);
-
+            // pré-clean para evitar conflito de unique em caso de sujeira de teste anterior
             await db.delete(schema.users).where(eq(schema.users.email, createNewUserEmail));
+
+            try {
+                const createUserDto: CreateUserDto = {
+                    username: createNewUserNome,
+                    email: createNewUserEmail,
+                    passwordHash: bcrypt.hashSync(createNewUserPass, 10),
+                    experienceLevel: ExperienceLevel.INTERMEDIATE,
+                };
+
+                const resultado = await service.createUser(createUserDto);
+
+                expect(resultado).toHaveProperty('id');
+                expect(resultado).toHaveProperty('username', createNewUserNome);
+                expect(resultado).toHaveProperty('email', createNewUserEmail);
+                expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.INTERMEDIATE);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.email, createNewUserEmail));
+            }
         });
 
         it('Deve criar usuário com experienceLevel padrão NOVICE.', async () => {
-            const createUserDto: CreateUserDto = {
-                username: 'Peter Grant',
-                email: 'Peter@grant.uk',
-                passwordHash: bcrypt.hashSync('Warren1935', 10),
-            };
+            const emailPeter = 'Peter@grant.uk';
 
-            const resultado = await service.createUser(createUserDto);
+            await db.delete(schema.users).where(eq(schema.users.email, emailPeter));
 
-            expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.NOVICE);
+            try {
+                const createUserDto: CreateUserDto = {
+                    username: 'Peter Grant',
+                    email: emailPeter,
+                    passwordHash: bcrypt.hashSync('Warren1935', 10),
+                };
 
-            await db.delete(schema.users).where(eq(schema.users.email, 'Peter@grant.uk'));
+                const resultado = await service.createUser(createUserDto);
+
+                expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.NOVICE);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.email, emailPeter));
+            }
         });
 
         it('Deve lançar BadRequestException se email já existe.', async () => {
-            const mesmoEmail = 'physicalGraffiti@Zeppelin.led'
+            const mesmoEmail = 'physicalGraffiti@Zeppelin.led';
 
-            const createUserDto_primeiro: CreateUserDto = {
-                username: 'Robert Anthony Plant',
-                email: mesmoEmail,
-                passwordHash: bcrypt.hashSync('Go0dT1m3sB4dT!m&s-69', 10),
-            };
-
-            service.createUser(createUserDto_primeiro)
-
-            const createUserDto_segundo: CreateUserDto = {
-                username: 'Robert Plan',
-                email: mesmoEmail,
-                passwordHash: bcrypt.hashSync('&Kashmir!75', 10),
-            };
-
-            await expect(service.createUser(createUserDto_segundo)).rejects.toBeInstanceOf(BadRequestException);
             await db.delete(schema.users).where(eq(schema.users.email, mesmoEmail));
+
+            try {
+                const createUserDto_primeiro: CreateUserDto = {
+                    username: 'Robert Anthony Plant',
+                    email: mesmoEmail,
+                    passwordHash: bcrypt.hashSync('Go0dT1m3sB4dT!m&s-69', 10),
+                };
+
+                await service.createUser(createUserDto_primeiro);
+
+                const createUserDto_segundo: CreateUserDto = {
+                    username: 'Robert Plan',
+                    email: mesmoEmail,
+                    passwordHash: bcrypt.hashSync('&Kashmir!75', 10),
+                };
+
+                await expect(
+                    service.createUser(createUserDto_segundo),
+                ).rejects.toBeInstanceOf(BadRequestException);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.email, mesmoEmail));
+            }
         });
 
         it('Deve criar usuário com todos os níveis de experiência.', async () => {
@@ -173,18 +198,26 @@ describe('Usuários Testes Service', () => {
             ];
 
             for (const nivel of niveis) {
-                const createUserDto: CreateUserDto = {
-                    username: `usuario_${nivel}`,
-                    email: `usuario_${nivel}@exemplo.com`,
-                    passwordHash: bcrypt.hashSync('senha_123', 10),
-                    experienceLevel: nivel,
-                };
+                const email = `usuario_${nivel}@exemplo.com`;
 
-                const resultado = await service.createUser(createUserDto);
+                // pré-clean por nível
+                await db.delete(schema.users).where(eq(schema.users.email, email));
 
-                expect(resultado).toHaveProperty('experienceLevel', nivel);
+                try {
+                    const createUserDto: CreateUserDto = {
+                        username: `usuario_${nivel}`,
+                        email,
+                        passwordHash: bcrypt.hashSync('senha_123', 10),
+                        experienceLevel: nivel,
+                    };
 
-                await db.delete(schema.users).where(eq(schema.users.email, `usuario_${nivel}@exemplo.com`));
+                    const resultado = await service.createUser(createUserDto);
+
+                    expect(resultado).toHaveProperty('experienceLevel', nivel);
+                } finally {
+                    // garante limpeza mesmo se a asserção falhar
+                    await db.delete(schema.users).where(eq(schema.users.email, email));
+                }
             }
         });
     });
@@ -193,29 +226,42 @@ describe('Usuários Testes Service', () => {
         it('Deve atualizar username do usuário.', async () => {
             await db.insert(schema.users).values(mockUsuario);
 
-            const novoNome = 'The piper'
+            const novoNome = 'The piper';
             const updateProfileDto: UpdateProfileDto = {
                 username: novoNome,
             };
 
-            const resultado = await service.updateProfile(usuarioId, updateProfileDto);
+            try {
+                const resultado = await service.updateProfile(usuarioId, updateProfileDto);
 
-            expect(resultado).toHaveProperty('username', novoNome);
-            await db.delete(schema.users).where(eq(schema.users.username, novoNome));
+                expect(resultado).toHaveProperty('username', novoNome);
+            } finally {
+                // Garante que o usuário base não fique no banco em caso de falha
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+                await db.delete(schema.users).where(eq(schema.users.username, novoNome));
+            }
         });
 
         it('Deve atualizar email do usuário.', async () => {
-            await db.insert(schema.users).values(mockUsuario);
-
             const novoEmail = 'aleister.Crowley@occult.zoso';
-            const updateProfileDto: UpdateProfileDto = {
-                email: novoEmail,
-            };
 
-            const resultado = await service.updateProfile(usuarioId, updateProfileDto);
-
-            expect(resultado).toHaveProperty('email', novoEmail);
+            await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
             await db.delete(schema.users).where(eq(schema.users.email, novoEmail));
+
+            try {
+                await db.insert(schema.users).values(mockUsuario);
+
+                const updateProfileDto: UpdateProfileDto = {
+                    email: novoEmail,
+                };
+
+                const resultado = await service.updateProfile(usuarioId, updateProfileDto);
+
+                expect(resultado).toHaveProperty('email', novoEmail);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+                await db.delete(schema.users).where(eq(schema.users.email, novoEmail));
+            }
         });
 
         it('Deve atualizar experienceLevel do usuário.', async () => {
@@ -225,30 +271,40 @@ describe('Usuários Testes Service', () => {
                 experienceLevel: ExperienceLevel.ADVANCED,
             };
 
-            const resultado = await service.updateProfile(usuarioId, updateProfileDto);
+            try {
+                const resultado = await service.updateProfile(usuarioId, updateProfileDto);
 
-            expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.ADVANCED);
-            await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+                expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.ADVANCED);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+            }
         });
 
         it('Deve atualizar múltiplos campos simultaneamente.', async () => {
-            await db.insert(schema.users).values(mockUsuario);
-
             const updateNome = 'The Lady';
             const updateEmail = 'all.that.glitters@is.gold';
-            const updateProfileDto: UpdateProfileDto = {
-                username: updateNome,
-                email: updateEmail,
-                experienceLevel: ExperienceLevel.EXPERT,
-            };
 
-            const resultado = await service.updateProfile(usuarioId, updateProfileDto);
-
-            expect(resultado).toHaveProperty('username', updateNome);
-            expect(resultado).toHaveProperty('email', updateEmail);
-            expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.EXPERT);
-
+            await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
             await db.delete(schema.users).where(eq(schema.users.email, updateEmail));
+
+            try {
+                await db.insert(schema.users).values(mockUsuario);
+
+                const updateProfileDto: UpdateProfileDto = {
+                    username: updateNome,
+                    email: updateEmail,
+                    experienceLevel: ExperienceLevel.EXPERT,
+                };
+
+                const resultado = await service.updateProfile(usuarioId, updateProfileDto);
+
+                expect(resultado).toHaveProperty('username', updateNome);
+                expect(resultado).toHaveProperty('email', updateEmail);
+                expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.EXPERT);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+                await db.delete(schema.users).where(eq(schema.users.email, updateEmail));
+            }
         });
 
         it('Deve lançar NotFoundException ao atualizar usuário inexistente.', async () => {
@@ -263,30 +319,45 @@ describe('Usuários Testes Service', () => {
         });
 
         it('Deve lançar BadRequestException se novo email já existe.', async () => {
-            await db.insert(schema.users).values(mockUsuario);
-
             const emailTeste = 'whenThe.levee@Breaks.br';
-            const outroUsuario = {
-                id: '00000000-0000-0000-0000-000000000005',
-                username: 'Sem nome',
-                email: emailTeste,
-                passwordHash: bcrypt.hashSync('4tlantic@r3cords1971', 10),
-                experienceLevel: ExperienceLevel.NOVICE,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
-            await db.insert(schema.users).values(outroUsuario);
-
-            const updateProfileDto: UpdateProfileDto = {
-                email: emailTeste,
-            };
-
-            await expect(
-                service.updateProfile(usuarioId, updateProfileDto),
-            ).rejects.toBeInstanceOf(BadRequestException);
 
             await db.delete(schema.users).where(eq(schema.users.email, emailTeste));
             await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+
+            try {
+                await db.insert(schema.users).values(mockUsuario);
+
+                const outroUsuario = {
+                    id: '00000000-0000-0000-0000-000000000005',
+                    username: 'Sem nome',
+                    email: emailTeste,
+                    passwordHash: bcrypt.hashSync('4tlantic@r3cords1971', 10),
+                    experienceLevel: ExperienceLevel.NOVICE,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                };
+                await db.insert(schema.users).values(outroUsuario);
+
+                const usuariosComEmailTeste = await db
+                    .select()
+                    .from(schema.users)
+                    .where(eq(schema.users.email, emailTeste));
+
+                expect(usuariosComEmailTeste).toHaveLength(1);
+                expect(usuariosComEmailTeste[0].id).toBe(outroUsuario.id);
+
+                const updateProfileDto: UpdateProfileDto = {
+                    email: emailTeste,
+                };
+
+                await expect(
+                    service.updateProfile(usuarioId, updateProfileDto),
+                ).rejects.toBeInstanceOf(BadRequestException);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.email, emailTeste));
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+                await db.delete(schema.users).where(eq(schema.users.id, '00000000-0000-0000-0000-000000000005'));
+            }
         });
 
         it('Deve permitir manter o mesmo email ao atualizar.', async () => {
@@ -298,11 +369,14 @@ describe('Usuários Testes Service', () => {
                 email: usuarioEmail,
             };
 
-            const resultado = await service.updateProfile(usuarioId, updateProfileDto);
+            try {
+                const resultado = await service.updateProfile(usuarioId, updateProfileDto);
 
-            expect(resultado).toHaveProperty('username', nomeTeste);
-            expect(resultado).toHaveProperty('email', usuarioEmail);
-            await db.delete(schema.users).where(eq(schema.users.username, nomeTeste));
+                expect(resultado).toHaveProperty('username', nomeTeste);
+                expect(resultado).toHaveProperty('email', usuarioEmail);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+            }
         });
     });
 
@@ -310,13 +384,18 @@ describe('Usuários Testes Service', () => {
         it('Deve deletar um usuário existente.', async () => {
             await db.insert(schema.users).values(mockUsuario);
 
-            const resultado = await service.deleteUser(usuarioId);
+            try {
+                const resultado = await service.deleteUser(usuarioId);
 
-            expect(resultado).toEqual({ message: 'Usuário deletado com sucesso' });
+                expect(resultado).toEqual({ message: 'Usuário deletado com sucesso' });
 
-            await expect(service.getProfile(usuarioId)).rejects.toBeInstanceOf(
-                NotFoundException,
-            );
+                await expect(service.getProfile(usuarioId)).rejects.toBeInstanceOf(
+                    NotFoundException,
+                );
+            } finally {
+                // Caso deleteUser falhe, não deixa sujeira
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+            }
         });
 
         it('Deve lançar NotFoundException ao deletar usuário inexistente.', async () => {
@@ -332,22 +411,30 @@ describe('Usuários Testes Service', () => {
         it('Deve retornar estatísticas de um usuário.', async () => {
             await db.insert(schema.users).values(mockUsuario);
 
-            const resultado = await service.getUserStatistics(usuarioId);
+            try {
+                const resultado = await service.getUserStatistics(usuarioId);
 
-            expect(resultado).toHaveProperty('id', usuarioId);
-            expect(resultado).toHaveProperty('username', usuarioUsername);
-            expect(resultado).toHaveProperty('email', usuarioEmail);
-            expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.NOVICE);
-            expect(resultado).toHaveProperty('createdAt');
-            expect(resultado).toHaveProperty('updatedAt');
+                expect(resultado).toHaveProperty('id', usuarioId);
+                expect(resultado).toHaveProperty('username', usuarioUsername);
+                expect(resultado).toHaveProperty('email', usuarioEmail);
+                expect(resultado).toHaveProperty('experienceLevel', ExperienceLevel.NOVICE);
+                expect(resultado).toHaveProperty('createdAt');
+                expect(resultado).toHaveProperty('updatedAt');
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+            }
         });
 
         it('Não deve retornar passwordHash nas estatísticas.', async () => {
             await db.insert(schema.users).values(mockUsuario);
 
-            const resultado = await service.getUserStatistics(usuarioId);
+            try {
+                const resultado = await service.getUserStatistics(usuarioId);
 
-            expect(resultado).not.toHaveProperty('passwordHash');
+                expect(resultado).not.toHaveProperty('passwordHash');
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+            }
         });
 
         it('Deve lançar NotFoundException se usuário não existir.', async () => {
@@ -363,10 +450,13 @@ describe('Usuários Testes Service', () => {
         it('Deve retornar true se usuário existe.', async () => {
             await db.insert(schema.users).values(mockUsuario);
 
-            const resultado = await service.userExists(usuarioId);
+            try {
+                const resultado = await service.userExists(usuarioId);
 
-            expect(resultado).toBe(true);
-            await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+                expect(resultado).toBe(true);
+            } finally {
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+            }
         });
 
         it('Deve retornar false se usuário não existe.', async () => {
@@ -378,7 +468,7 @@ describe('Usuários Testes Service', () => {
         });
 
         it('Deve retornar false em caso de erro.', async () => {
-            const resultado = await service.userExists('id-invalido');
+            const resultado = await service.userExists('id-qualquer');
 
             expect(typeof resultado).toBe('boolean');
         });
