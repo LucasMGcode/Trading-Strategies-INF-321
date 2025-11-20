@@ -16,7 +16,6 @@ import {
     RewardProfile,
     StrategyType,
 } from './dto/create-strategy.dto';
-import { InstrumentType } from '../simulations/dto/create-simulation-leg.dto';
 import { StrategyInstrumentType, StrategyLegAction, StrikeRelation } from './dto/create-strategy-leg.dto';
 
 describe('Estratégias Testes de Integração', () => {
