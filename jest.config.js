@@ -19,6 +19,7 @@ module.exports = {
   ],
   coverageDirectory: './coverage',
   testEnvironment: 'node',
+  maxWorkers: 1,
   roots: ['<rootDir>/apps/server'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/apps/server/$1',
