@@ -3,4 +3,6 @@
 node_modules
 **/dist
 .vscode
-log.txt
+
+stdout.txt
+stderr.txt
