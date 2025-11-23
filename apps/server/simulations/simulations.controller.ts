@@ -47,8 +47,15 @@ export class SimulationsController {
     @Get('user/:userId')
     async getUserSimulations(
         @Param('userId') userId: string,
-        @Query() options?: PaginationOptions,
+        @Query('limit') limit?: string,
+        @Query('offset') offset?: string,
+        @Query('orderBy') orderBy?: 'recent' | 'oldest',
     ) {
+        const options: PaginationOptions = {
+            limit: limit ? Number(limit) : undefined,
+            offset: offset ? Number(offset) : 0,
+            orderBy: orderBy === 'oldest' ? 'oldest' : 'recent',
+        };
         return this.simulationsService.getUserSimulations(userId, options);
     }
 

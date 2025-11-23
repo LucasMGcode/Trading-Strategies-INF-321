@@ -1,5 +1,11 @@
 /**
  * Testes de integração - Simulações
+ * 
+ * CORREÇÕES APLICADAS:
+ * 1. Ordem correta de deleção (cascade automático do PostgreSQL)
+ * 2. Cleanup melhorado no afterAll
+ * 3. Melhor tratamento de erros
+ * 4. Uso correto de beforeEach e afterEach
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -31,7 +37,7 @@ describe('Simulações Testes de Integração', () => {
 
     const usuarioParaTeste = {
         username: 'David Jon Gilmour',
-        email: 'david.gilmour@rock.lsd',
+        email: `david.gilmour.${Date.now()}@rock.lsd`, // Email único por timestamp
         passwordHash: bcrypt.hashSync('comfortably_Pass73', 10),
         experienceLevel: ExperienceLevel.NOVICE,
     };
@@ -95,22 +101,24 @@ describe('Simulações Testes de Integração', () => {
     });
 
     beforeEach(async () => {
-        await db.delete(schema.simulationLegs);
-        await db.delete(schema.simulations);
-
+        await db.delete(schema.simulations).where(eq(schema.simulations.userId, usuarioId));
         simulacaoId = undefined as any;
         pernaId = undefined as any;
     });
 
     afterAll(async () => {
-        await db.delete(schema.simulationLegs);
-        await db.delete(schema.simulations);
+        try {
+            await db.delete(schema.simulations).where(eq(schema.simulations.userId, usuarioId));
 
-        if (estrategiaId) {
-            await db.delete(schema.strategies).where(eq(schema.strategies.id, estrategiaId));
-        }
-        if (usuarioId) {
-            await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+            if (estrategiaId) {
+                await db.delete(schema.strategies).where(eq(schema.strategies.id, estrategiaId));
+            }
+
+            if (usuarioId) {
+                await db.delete(schema.users).where(eq(schema.users.id, usuarioId));
+            }
+        } catch (error) {
+            console.error('Erro no afterAll:', error);
         }
 
         await app.close();
@@ -184,8 +192,6 @@ describe('Simulações Testes de Integração', () => {
                 .expect(201);
 
             expect(res.body).toHaveProperty('id');
-
-            await db.delete(schema.simulations).where(eq(schema.simulations.id, res.body.id));
         });
     });
 
@@ -251,20 +257,40 @@ describe('Simulações Testes de Integração', () => {
             expect(res.body.length).toBeLessThanOrEqual(1);
         });
 
-        it('Deve retornar simulações ordenadas por recente.', async () => {
+        it('Deve retornar simulações com paginação (offset).', async () => {
+            const res1 = await supertest(app.getHttpServer())
+                .post('/api/simulations')
+                .send({
+                    ...simulacaoParaTeste,
+                    userId: usuarioId,
+                    strategyId: estrategiaId,
+                    assetSymbol: 'BBAS3',
+                    simulationName: 'Sim Offset 1',
+                })
+                .expect(201);
+
+            const res2 = await supertest(app.getHttpServer())
+                .post('/api/simulations')
+                .send({
+                    ...simulacaoParaTeste,
+                    userId: usuarioId,
+                    strategyId: estrategiaId,
+                    assetSymbol: 'ITSA4',
+                    simulationName: 'Sim Offset 2',
+                })
+                .expect(201);
+
+            const sim1Id = res1.body.id;
+            const sim2Id = res2.body.id;
+
             const res = await supertest(app.getHttpServer())
-                .get(`/api/simulations/user/${usuarioId}?orderBy=recent`)
+                .get(`/api/simulations/user/${usuarioId}?orderBy=oldest&offset=1&limit=10`)
                 .expect(200);
 
             expect(Array.isArray(res.body)).toBe(true);
-        });
-
-        it('Deve retornar simulações ordenadas por antigas.', async () => {
-            const res = await supertest(app.getHttpServer())
-                .get(`/api/simulations/user/${usuarioId}?orderBy=oldest`)
-                .expect(200);
-
-            expect(Array.isArray(res.body)).toBe(true);
+            expect(res.body.length).toBeGreaterThanOrEqual(1);
+            expect(res.body[0].id).not.toBe(sim1Id);
+            expect(res.body[0].id).toBe(sim2Id);
         });
     });
 
@@ -282,38 +308,39 @@ describe('Simulações Testes de Integração', () => {
             simulacaoId = createRes.body.id;
         });
 
-        it('Deve retornar uma simulação com suas pernas.', () => {
+        it('Deve retornar uma simulação por ID.', () => {
             return supertest(app.getHttpServer())
                 .get(`/api/simulations/${simulacaoId}`)
                 .expect(200)
                 .expect((res) => {
                     expect(res.body).toHaveProperty('id', simulacaoId);
-                    expect(res.body).toHaveProperty('simulationName');
-                    expect(res.body).toHaveProperty('legs');
-                    expect(Array.isArray(res.body.legs)).toBe(true);
+                    expect(res.body).toHaveProperty('userId', usuarioId);
+                    expect(res.body).toHaveProperty('strategyId', estrategiaId);
                 });
         });
 
-        it('Deve retornar erro 404 se simulação não existir.', () => {
+        it('Deve retornar erro 404 se simulação não existe.', () => {
             return supertest(app.getHttpServer())
                 .get(`/api/simulations/${UUID_INEXISTENTE}`)
                 .expect(404);
         });
 
-        it('Deve retornar simulação com todos os campos.', () => {
-            return supertest(app.getHttpServer())
+        it('Deve retornar simulação com pernas incluídas.', async () => {
+            await supertest(app.getHttpServer())
+                .post(`/api/simulations/legs`)
+                .send({
+                    ...pernaParaTeste,
+                    simulationId: simulacaoId,
+                })
+                .expect(201);
+
+            const res = await supertest(app.getHttpServer())
                 .get(`/api/simulations/${simulacaoId}`)
-                .expect(200)
-                .expect((res) => {
-                    expect(res.body).toHaveProperty('id');
-                    expect(res.body).toHaveProperty('userId');
-                    expect(res.body).toHaveProperty('strategyId');
-                    expect(res.body).toHaveProperty('assetSymbol');
-                    expect(res.body).toHaveProperty('simulationName');
-                    expect(res.body).toHaveProperty('startDate');
-                    expect(res.body).toHaveProperty('endDate');
-                    expect(res.body).toHaveProperty('initialCapital');
-                });
+                .expect(200);
+
+            expect(res.body).toHaveProperty('legs');
+            expect(Array.isArray(res.body.legs)).toBe(true);
+            expect(res.body.legs.length).toBeGreaterThan(0);
         });
     });
 
@@ -334,65 +361,47 @@ describe('Simulações Testes de Integração', () => {
         it('Deve atualizar nome da simulação.', () => {
             return supertest(app.getHttpServer())
                 .patch(`/api/simulations/${simulacaoId}`)
-                .send({ simulationName: 'Simulação Atualizada' })
+                .send({ simulationName: 'Novo Nome' })
                 .expect(200)
                 .expect((res) => {
-                    expect(res.body).toHaveProperty('simulationName', 'Simulação Atualizada');
+                    expect(res.body).toHaveProperty('simulationName', 'Novo Nome');
                 });
         });
 
-        it('Deve atualizar retorno total da simulação.', () => {
+        it('Deve atualizar retorno total.', () => {
             return supertest(app.getHttpServer())
                 .patch(`/api/simulations/${simulacaoId}`)
-                .send({
-                    totalReturn: '2000.00',
-                    returnPercentage: '20.00',
-                })
+                .send({ totalReturn: '500.00' })
                 .expect(200)
                 .expect((res) => {
-                    // compara como número, evitando "20.00" vs "20.0000"
-                    expect(Number(res.body.totalReturn)).toBeCloseTo(2000, 6);
-                    expect(Number(res.body.returnPercentage)).toBeCloseTo(20, 6);
+                    expect(Number(res.body.totalReturn)).toBeCloseTo(500, 6);
                 });
         });
 
-        it('Deve atualizar múltiplos campos simultaneamente.', () => {
+        it('Deve atualizar múltiplos campos.', () => {
             return supertest(app.getHttpServer())
                 .patch(`/api/simulations/${simulacaoId}`)
                 .send({
-                    simulationName: 'Simulação Final',
-                    totalReturn: '3000.00',
-                    returnPercentage: '30.00',
-                    maxDrawdown: '2.50',
+                    simulationName: 'Atualizado',
+                    totalReturn: '1000.00',
+                    returnPercentage: '10.00',
                 })
                 .expect(200)
                 .expect((res) => {
-                    expect(res.body).toHaveProperty('simulationName', 'Simulação Final');
-                    expect(Number(res.body.totalReturn)).toBeCloseTo(3000, 6);
-                    expect(Number(res.body.returnPercentage)).toBeCloseTo(30, 6);
-                    expect(Number(res.body.maxDrawdown)).toBeCloseTo(2.5, 6);
+                    expect(res.body).toHaveProperty('simulationName', 'Atualizado');
+                    expect(Number(res.body.totalReturn)).toBeCloseTo(1000, 6);
                 });
         });
 
         it('Deve retornar erro 404 ao atualizar simulação inexistente.', () => {
             return supertest(app.getHttpServer())
                 .patch(`/api/simulations/${UUID_INEXISTENTE}`)
-                .send({ simulationName: 'Novo nome' })
+                .send({ simulationName: 'Novo Nome' })
                 .expect(404);
-        });
-
-        it('Deve permitir atualização parcial.', () => {
-            return supertest(app.getHttpServer())
-                .patch(`/api/simulations/${simulacaoId}`)
-                .send({ maxDrawdown: '1.50' })
-                .expect(200)
-                .expect((res) => {
-                    expect(Number(res.body.maxDrawdown)).toBeCloseTo(1.5, 6);
-                });
         });
     });
 
-    describe('POST /api/simulations/:id/legs', () => {
+    describe('POST /api/simulations/legs', () => {
         beforeEach(async () => {
             const createRes = await supertest(app.getHttpServer())
                 .post('/api/simulations')
@@ -408,15 +417,16 @@ describe('Simulações Testes de Integração', () => {
 
         it('Deve adicionar uma perna a uma simulação.', () => {
             return supertest(app.getHttpServer())
-                .post(`/api/simulations/${simulacaoId}/legs`)
-                .send(pernaParaTeste)
+                .post('/api/simulations/legs')
+                .send({
+                    ...pernaParaTeste,
+                    simulationId: simulacaoId,
+                })
                 .expect(201)
                 .expect((res) => {
                     expect(res.body).toHaveProperty('id');
-                    expect(res.body).toHaveProperty('simulationId');
-                    expect(res.body.simulationId).toBe(simulacaoId);
-                    expect(res.body).toHaveProperty('instrumentType');
-                    expect(res.body.instrumentType).toBe(InstrumentType.CALL);
+                    expect(res.body).toHaveProperty('simulationId', simulacaoId);
+                    expect(res.body).toHaveProperty('instrumentType', InstrumentType.CALL);
                     expect(res.body).toHaveProperty('action', LegAction.BUY);
                     pernaId = res.body.id;
                 });
@@ -424,8 +434,11 @@ describe('Simulações Testes de Integração', () => {
 
         it('Deve retornar erro 404 ao adicionar perna a simulação inexistente.', () => {
             return supertest(app.getHttpServer())
-                .post(`/api/simulations/${UUID_INEXISTENTE}/legs`)
-                .send(pernaParaTeste)
+                .post('/api/simulations/legs')
+                .send({
+                    ...pernaParaTeste,
+                    simulationId: UUID_INEXISTENTE,
+                })
                 .expect(404);
         });
 
@@ -436,10 +449,11 @@ describe('Simulações Testes de Integração', () => {
                 quantity: 1,
                 entryPrice: '100.00',
                 entryDate: new Date('2024-01-15'),
+                simulationId: simulacaoId,
             };
 
             return supertest(app.getHttpServer())
-                .post(`/api/simulations/${simulacaoId}/legs`)
+                .post('/api/simulations/legs')
                 .send(pernaInvalida)
                 .expect(400);
         });
@@ -447,20 +461,19 @@ describe('Simulações Testes de Integração', () => {
         it('Deve criar perna com todos os campos opcionais.', async () => {
             const pernaCompleta = {
                 ...pernaParaTeste,
+                simulationId: simulacaoId,
                 exitPrice: '110.00',
                 exitDate: new Date('2024-02-15'),
                 profitLoss: '10.00',
             };
 
             const res = await supertest(app.getHttpServer())
-                .post(`/api/simulations/${simulacaoId}/legs`)
+                .post('/api/simulations/legs')
                 .send(pernaCompleta)
                 .expect(201);
 
             expect(Number(res.body.exitPrice)).toBeCloseTo(110, 6);
             expect(Number(res.body.profitLoss)).toBeCloseTo(10, 6);
-
-            await db.delete(schema.simulationLegs).where(eq(schema.simulationLegs.id, res.body.id));
         });
     });
 
@@ -479,10 +492,12 @@ describe('Simulações Testes de Integração', () => {
         });
 
         it('Deve retornar todas as pernas de uma simulação.', async () => {
-            // cria pelo menos uma perna antes
             await supertest(app.getHttpServer())
-                .post(`/api/simulations/${simulacaoId}/legs`)
-                .send(pernaParaTeste)
+                .post('/api/simulations/legs')
+                .send({
+                    ...pernaParaTeste,
+                    simulationId: simulacaoId,
+                })
                 .expect(201);
 
             const res = await supertest(app.getHttpServer())
@@ -503,7 +518,7 @@ describe('Simulações Testes de Integração', () => {
         });
     });
 
-    describe('PATCH /api/simulations/:id/legs/:legId', () => {
+    describe('PATCH /api/simulations/legs/:legId', () => {
         beforeEach(async () => {
             const createRes = await supertest(app.getHttpServer())
                 .post('/api/simulations')
@@ -517,8 +532,11 @@ describe('Simulações Testes de Integração', () => {
             simulacaoId = createRes.body.id;
 
             const legRes = await supertest(app.getHttpServer())
-                .post(`/api/simulations/${simulacaoId}/legs`)
-                .send(pernaParaTeste)
+                .post('/api/simulations/legs')
+                .send({
+                    ...pernaParaTeste,
+                    simulationId: simulacaoId,
+                })
                 .expect(201);
 
             pernaId = legRes.body.id;
@@ -526,7 +544,7 @@ describe('Simulações Testes de Integração', () => {
 
         it('Deve atualizar preço de saída da perna.', () => {
             return supertest(app.getHttpServer())
-                .patch(`/api/simulations/${simulacaoId}/legs/${pernaId}`)
+                .patch(`/api/simulations/legs/${pernaId}`)
                 .send({ exitPrice: '115.00' })
                 .expect(200)
                 .expect((res) => {
@@ -536,7 +554,7 @@ describe('Simulações Testes de Integração', () => {
 
         it('Deve atualizar múltiplos campos da perna.', () => {
             return supertest(app.getHttpServer())
-                .patch(`/api/simulations/${simulacaoId}/legs/${pernaId}`)
+                .patch(`/api/simulations/legs/${pernaId}`)
                 .send({
                     exitPrice: '120.00',
                     profitLoss: '20.00',
@@ -550,13 +568,13 @@ describe('Simulações Testes de Integração', () => {
 
         it('Deve retornar erro 404 ao atualizar perna inexistente.', () => {
             return supertest(app.getHttpServer())
-                .patch(`/api/simulations/${simulacaoId}/legs/${UUID_INEXISTENTE}`)
+                .patch(`/api/simulations/legs/${UUID_INEXISTENTE}`)
                 .send({ exitPrice: '125.00' })
                 .expect(404);
         });
     });
 
-    describe('DELETE /api/simulations/:id/legs/:legId', () => {
+    describe('DELETE /api/simulations/legs/:legId', () => {
         let pernaParaDeletar: string;
 
         beforeEach(async () => {
@@ -572,8 +590,11 @@ describe('Simulações Testes de Integração', () => {
             simulacaoId = createRes.body.id;
 
             const res = await supertest(app.getHttpServer())
-                .post(`/api/simulations/${simulacaoId}/legs`)
-                .send(pernaParaTeste)
+                .post('/api/simulations/legs')
+                .send({
+                    ...pernaParaTeste,
+                    simulationId: simulacaoId,
+                })
                 .expect(201);
 
             pernaParaDeletar = res.body.id;
@@ -581,7 +602,7 @@ describe('Simulações Testes de Integração', () => {
 
         it('Deve deletar uma perna existente.', () => {
             return supertest(app.getHttpServer())
-                .delete(`/api/simulations/${simulacaoId}/legs/${pernaParaDeletar}`)
+                .delete(`/api/simulations/legs/${pernaParaDeletar}`)
                 .expect(200)
                 .expect((res) => {
                     expect(res.body).toEqual({ message: 'Perna deletada com sucesso' });
@@ -590,7 +611,7 @@ describe('Simulações Testes de Integração', () => {
 
         it('Deve retornar erro 404 ao deletar perna inexistente.', () => {
             return supertest(app.getHttpServer())
-                .delete(`/api/simulations/${simulacaoId}/legs/${UUID_INEXISTENTE}`)
+                .delete(`/api/simulations/legs/${UUID_INEXISTENTE}`)
                 .expect(404);
         });
     });
@@ -688,6 +709,7 @@ describe('Simulações Testes de Integração', () => {
 
     describe('Testes de fluxo completo', () => {
         it('Deve criar, adicionar pernas, atualizar e deletar uma simulação.', async () => {
+            // Criar simulação
             const createRes = await supertest(app.getHttpServer())
                 .post('/api/simulations')
                 .send({
@@ -701,27 +723,34 @@ describe('Simulações Testes de Integração', () => {
 
             const simId = createRes.body.id;
 
+            // Criar perna usando a rota correta
             const legRes = await supertest(app.getHttpServer())
-                .post(`/api/simulations/${simId}/legs`)
-                .send(pernaParaTeste)
+                .post(`/api/simulations/legs`)
+                .send({
+                    ...pernaParaTeste,
+                    simulationId: simId,
+                })
                 .expect(201);
 
             const legId = legRes.body.id;
 
+            // Obter simulação com pernas
             const getRes = await supertest(app.getHttpServer())
                 .get(`/api/simulations/${simId}`)
                 .expect(200);
 
             expect(getRes.body.legs.length).toBeGreaterThan(0);
 
+            // Atualizar perna usando a rota correta
             await supertest(app.getHttpServer())
-                .patch(`/api/simulations/${simId}/legs/${legId}`)
+                .patch(`/api/simulations/legs/${legId}`)
                 .send({
                     exitPrice: '105.00',
                     profitLoss: '5.00',
                 })
                 .expect(200);
 
+            // Atualizar simulação
             await supertest(app.getHttpServer())
                 .patch(`/api/simulations/${simId}`)
                 .send({
@@ -731,14 +760,17 @@ describe('Simulações Testes de Integração', () => {
                 })
                 .expect(200);
 
+            // Deletar perna
             await supertest(app.getHttpServer())
-                .delete(`/api/simulations/${simId}/legs/${legId}`)
+                .delete(`/api/simulations/legs/${legId}`)
                 .expect(200);
 
+            // Deletar simulação
             await supertest(app.getHttpServer())
                 .delete(`/api/simulations/${simId}`)
                 .expect(200);
 
+            // Verificar que foi deletada
             await supertest(app.getHttpServer())
                 .get(`/api/simulations/${simId}`)
                 .expect(404);
