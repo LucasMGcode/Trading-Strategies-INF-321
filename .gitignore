@@ -4,5 +4,9 @@ node_modules
 **/dist
 .vscode
 
+# Arquivos gerados nos testes
+test-artifacts/
+logs.txt
+errors.txt
 stdout.txt
 stderr.txt

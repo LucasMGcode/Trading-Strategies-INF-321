@@ -7,7 +7,7 @@ module.exports = {
       'ts-jest',
       {
         tsconfig: '<rootDir>/apps/server/tsconfig.json',
-      }
+      },
     ],
   },
   collectCoverageFrom: [
@@ -19,10 +19,19 @@ module.exports = {
   ],
   coverageDirectory: './coverage',
   testEnvironment: 'node',
-  maxWorkers: 1,
   roots: ['<rootDir>/apps/server'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/apps/server/$1',
   },
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  maxWorkers: 1,
+  reporters: [
+    "default",
+    ["<rootDir>/jest-reporters/dual-stream-reporter.js", {
+      logsPath: "test-artifacts/logs.txt",
+      errorsPath: "test-artifacts/errors.txt",
+      stdoutPath: "test-artifacts/stdout.txt",
+      stderrPath: "test-artifacts/stderr.txt"
+    }]
+  ],
 };
