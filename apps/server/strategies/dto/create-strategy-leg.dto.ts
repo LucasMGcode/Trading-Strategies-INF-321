@@ -2,7 +2,6 @@
  * DTO para criar perna de estratégia
  */
 import {
-    IsString,
     IsUUID,
     IsEnum,
     IsInt,

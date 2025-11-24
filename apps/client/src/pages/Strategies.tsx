@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useStrategies } from '@/hooks/useStrategies';
-import { Search, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 export default function Strategies() {
     const [filters, setFilters] = useState({

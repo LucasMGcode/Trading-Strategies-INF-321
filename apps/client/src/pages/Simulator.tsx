@@ -41,7 +41,7 @@ export default function Simulator() {
                 endDate: '',
                 simulationName: '',
             });
-        } catch (error) {
+        } catch {
             toast.error('Erro ao criar simulação');
         } finally {
             setIsLoading(false);

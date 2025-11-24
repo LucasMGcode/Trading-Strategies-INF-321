@@ -3,7 +3,7 @@
  * Implementa a lógica de negócio para CRUD, paginação e cálculos.
  */
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { db, SelectSimulation, InsertSimulation, SelectSimulationLeg } from '../db';
+import { db, SelectSimulation, SelectSimulationLeg } from '../db';
 import { eq, desc, asc } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
 import { CreateSimulationDto } from './dto/create-simulation.dto';

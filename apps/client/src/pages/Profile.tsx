@@ -49,7 +49,7 @@ export default function Profile() {
                 confirmPassword: '',
             });
             setIsEditingPassword(false);
-        } catch (error) {
+        } catch {
             toast.error('Erro ao alterar senha');
         } finally {
             setIsLoading(false);
@@ -68,7 +68,7 @@ export default function Profile() {
                 await new Promise((resolve) => setTimeout(resolve, 1000));
                 toast.success('Conta deletada com sucesso');
                 await logout();
-            } catch (error) {
+            } catch {
                 toast.error('Erro ao deletar conta');
             } finally {
                 setIsLoading(false);
