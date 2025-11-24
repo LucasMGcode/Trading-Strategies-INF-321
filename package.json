@@ -9,16 +9,20 @@
     "build": "pnpm run build:client && pnpm run build:server",
     "build:server": "tsc -p tsconfig.json",
     "build:client": "vite build --config apps/client/vite.config.ts",
+
     "db:generate": "drizzle-kit generate --config packages/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config packages/drizzle.config.ts",
     "db:push": "pnpm run db:generate && pnpm run db:migrate",
     "db:studio": "drizzle-kit studio",
     "db:drop": "drizzle-kit drop",
     "db:check": "drizzle-kit check",
+
     "lint": "eslint \"apps/**/*.{ts,tsx,js,jsx}\"",
+
     "start:dev": "pnpm run dev",
     "start": "node apps/server/dist/main.js",
     "start:prod": "node apps/server/dist/main.js",
+
     "test": "jest --config jest.config.js",
     "test:watch": "jest --config jest.config.js --watch",
     "test:coverage": "jest --config jest.config.js --coverage",
@@ -27,7 +31,12 @@
     "test:client:watch": "vitest --config vitest.config.ts --watch",
     "test:client:coverage": "vitest --config vitest.config.ts --coverage",
     "test:e2e": "playwright test",
-    "test:all": "pnpm run test:server && pnpm run test:client"
+    "test:all": "pnpm run test:server && pnpm run test:client",
+
+    "test:server:coverage": "jest --config jest.config.js apps/server --coverage --coverageReporters=lcov --coverageDirectory=test-artifacts/server-coverage",
+    "test:client:coverage:sonar": "vitest --config vitest.config.ts --coverage --coverage.reporter=lcov --coverage.reportsDirectory=test-artifacts/client-coverage",
+    "coverage:merge": "node ./scripts/merge-lcov.mjs",
+    "test:coverage:sonar": "pnpm run test:server:coverage"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.9",
