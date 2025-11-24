@@ -1,130 +1,168 @@
 # .github/workflows/ci.yml
-
-name: CI Robusto (pnpm)
-
+name: CI
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-
+    branches: [main]
 jobs:
-  # 1. Configuração Base e Instalação de Dependências
+  # 1. Setup (instala e faz cache do pnpm store)
   setup:
     name: Configuração e Instalação
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Instalar pnpm
-        run: npm install -g pnpm
-
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
       - name: Instalar dependências (pnpm)
         run: pnpm install --frozen-lockfile
-
-      # Salva as dependências instaladas como um artefato para reuso nos próximos jobs
-      - name: Cache de Dependências (pnpm)
-        uses: actions/cache/save@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-
-  # 2. Testes (Depende de Setup)
+  # 2. Testes
   test:
     name: Testes (Jest) e Artefatos
     runs-on: ubuntu-latest
-    needs: setup # Depende do job 'setup'
+    needs: setup
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trading_strategies_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d trading_strategies_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/trading_strategies_test
+      NODE_ENV: test
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      # Restaura as dependências do cache
-      - name: Restaurar Cache de Dependências
-        uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Instalar dependências (pnpm)
+        run: pnpm install --frozen-lockfile
+      - name: Instalar postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Esperar Postgres ficar pronto
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U postgres -d trading_strategies_test && break
+            sleep 1
+          done
+      - name: Rodar migrations
+        run: pnpm run db:migrate
       - name: Rodar a suíte de testes
         run: pnpm run test
-
       - name: Upload dos artefatos de teste
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-artifacts
           path: test-artifacts/
-
-  # 3. Verificação de Código (Linting)
+  # 3. Lint
   lint:
     name: Verificação de Código (ESLint)
     runs-on: ubuntu-latest
-    needs: setup # Depende do job 'setup'
+    needs: setup
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Restaurar Cache de Dependências
-        uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Instalar dependências (pnpm)
+        run: pnpm install --frozen-lockfile
       - name: Rodar o Linter
         run: pnpm run lint
-
-  # 4. Análise de Segurança
+  # 4. Segurança
   security:
     name: Análise de Segurança
     runs-on: ubuntu-latest
-    needs: setup # Depende do job 'setup'
+    needs: setup
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Restaurar Cache de Dependências
-        uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Rodar Auditoria de Segurança (npm audit)
-        run: npm audit --audit-level=high
-
-  # 5. Build (Depende de Testes, Lint e Segurança)
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Instalar dependências (pnpm)
+        run: pnpm install --frozen-lockfile
+      - name: Rodar Auditoria de Segurança (pnpm audit)
+        run: pnpm audit --audit-level=high
+  # 5. Build
   build:
     name: Build de Produção
     runs-on: ubuntu-latest
-    # Este job só roda se TODOS os jobs anteriores (test, lint, security) passarem
     needs: [test, lint, security]
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Instalar dependências (pnpm)
+        run: pnpm install --frozen-lockfile
+      - name: Rodar Build
+        run: pnpm run build
+      - name: Upload dos Artefatos de Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            apps/server/dist/
+            apps/client/dist/
+  # 6. Análise de Qualidade Avançada (SonarCloud)
+  sonar_analysis:
+    name: Análise de Code Smells (SonarCloud)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -132,25 +170,21 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Restaurar Cache de Dependências
-        uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-
       - name: Instalar pnpm
-        run: npm install -g pnpm
-
-      # Executa o script de build: "pnpm run build:client && pnpm run build:server"
-      - name: Rodar Build
-        run: pnpm run build
-
-      # Salva os artefatos de build para o CD
-      - name: Upload dos Artefatos de Build
-        uses: actions/upload-artifact@v4
+        uses: pnpm/action-setup@v4
         with:
-          name: build-artifacts
-          # Caminhos de build baseados na estrutura de monorepo e scripts do usuário
-          path: |
-            apps/server/dist/
-            apps/client/dist/
+          version: 9
+
+      - name: Instalar dependências (pnpm)
+        run: pnpm install --frozen-lockfile
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2.2.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=LucasMGcode_Trading-Strategies-INF-321
+            -Dsonar.organization=lucasmgcode
+            -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.sources=.
