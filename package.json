@@ -10,6 +10,7 @@
     "build:server": "tsc -p tsconfig.json",
     "build:client": "vite build --config apps/client/vite.config.ts",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:drop": "drizzle-kit drop",
     "db:check": "drizzle-kit check",

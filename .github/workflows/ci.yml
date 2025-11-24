@@ -37,6 +37,26 @@ jobs:
     name: Testes (Jest) e Artefatos
     runs-on: ubuntu-latest
     needs: setup
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trading_strategies_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d trading_strategies_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/trading_strategies_test
+      NODE_ENV: test
+
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -55,6 +75,19 @@ jobs:
 
       - name: Instalar dependências (pnpm)
         run: pnpm install --frozen-lockfile
+
+      - name: Instalar postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Esperar Postgres ficar pronto
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U postgres -d trading_strategies_test && break
+            sleep 1
+          done
+
+      - name: Rodar migrations
+        run: pnpm run db:migrate
 
       - name: Rodar a suíte de testes
         run: pnpm run test
