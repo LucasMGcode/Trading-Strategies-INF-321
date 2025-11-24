@@ -33,7 +33,7 @@ export class JwtGuard implements CanActivate {
             // Adicionar payload ao request para uso posterior
             request.user = payload;
             return true;
-        } catch (error) {
+        } catch {
             throw new UnauthorizedException('Token inválido');
         }
     }

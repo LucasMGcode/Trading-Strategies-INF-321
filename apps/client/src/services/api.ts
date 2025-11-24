@@ -82,11 +82,11 @@ class ApiService {
         return this.api.get(`/strategies/${id}`);
     }
 
-    async createStrategy(data: any) {
+    async createStrategy(data: unknown) {
         return this.api.post('/strategies', data);
     }
 
-    async updateStrategy(id: string, data: any) {
+    async updateStrategy(id: string, data: unknown) {
         return this.api.patch(`/strategies/${id}`, data);
     }
 
@@ -107,11 +107,11 @@ class ApiService {
         return this.api.get(`/simulations/${id}`);
     }
 
-    async createSimulation(data: any) {
+    async createSimulation(data: unknown) {
         return this.api.post('/simulations', data);
     }
 
-    async updateSimulation(id: string, data: any) {
+    async updateSimulation(id: string, data: unknown) {
         return this.api.patch(`/simulations/${id}`, data);
     }
 
@@ -128,7 +128,7 @@ class ApiService {
         return this.api.get(`/users/${userId}/profile`);
     }
 
-    async updateUserProfile(userId: string, data: any) {
+    async updateUserProfile(userId: string, data: unknown) {
         return this.api.patch(`/users/${userId}/profile`, data);
     }
 

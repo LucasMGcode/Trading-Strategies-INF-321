@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '@/services/api';
+import axios from 'axios';
 
 export interface User {
     id: string;
@@ -56,8 +57,12 @@ export const useAuth = () => {
 
             setUser(user);
             return user;
-        } catch (err: any) {
-            const errorMessage = err.response?.data?.message || 'Erro ao fazer login';
+        } catch (err: unknown) {
+            const errorMessage =
+                axios.isAxiosError(err)
+                    ? (err.response?.data as { message?: string })?.message || 'Erro ao fazer login'
+                    : 'Erro ao fazer login';
+
             setError(errorMessage);
             throw err;
         } finally {
@@ -87,8 +92,12 @@ export const useAuth = () => {
 
                 setUser(user);
                 return user;
-            } catch (err: any) {
-                const errorMessage = err.response?.data?.message || 'Erro ao registrar';
+            } catch (err: unknown) {
+                const errorMessage =
+                    axios.isAxiosError(err)
+                        ? (err.response?.data as { message?: string })?.message || 'Erro ao registrar'
+                        : 'Erro ao registrar';
+
                 setError(errorMessage);
                 throw err;
             } finally {

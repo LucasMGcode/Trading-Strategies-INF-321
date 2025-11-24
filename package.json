@@ -9,11 +9,13 @@
     "build": "pnpm run build:client && pnpm run build:server",
     "build:server": "tsc -p tsconfig.json",
     "build:client": "vite build --config apps/client/vite.config.ts",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "db:generate": "drizzle-kit generate --config packages/drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config packages/drizzle.config.ts",
+    "db:push": "pnpm run db:generate && pnpm run db:migrate",
     "db:studio": "drizzle-kit studio",
     "db:drop": "drizzle-kit drop",
     "db:check": "drizzle-kit check",
-    "lint": "eslint .",
+    "lint": "eslint \"apps/**/*.{ts,tsx,js,jsx}\"",
     "start:dev": "pnpm run dev",
     "start": "node apps/server/dist/main.js",
     "start:prod": "node apps/server/dist/main.js",
@@ -68,7 +70,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
-    "@nestjs/cli": "^11.0.0",
+    "@nestjs/cli": "^11.0.12",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
     "@playwright/test": "^1.56.1",
@@ -92,6 +94,8 @@
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
     "glob": "^9.3.5",
     "globals": "^16.0.0",
     "jest": "^30.2.0",
@@ -126,5 +130,10 @@
   "bugs": {
     "url": "https://github.com/LucasMGcode/Trading-Strategies-INF-321/issues"
   },
-  "homepage": "https://github.com/LucasMGcode/Trading-Strategies-INF-321#readme"
+  "homepage": "https://github.com/LucasMGcode/Trading-Strategies-INF-321#readme",
+  "pnpm": {
+    "overrides": {
+      "esbuild": ">=0.25.0"
+    }
+  }
 }

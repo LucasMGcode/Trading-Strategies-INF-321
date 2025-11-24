@@ -203,7 +203,7 @@ export class AuthController {
             const payload = await this.authService.validateToken(token);
             return { valid: true, payload };
         } catch (error) {
-            return { valid: false };
+            return { valid: false, error };
         }
     }
 }

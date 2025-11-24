@@ -3,7 +3,7 @@
  * Implementa a lógica de negócio para CRUD e filtros.
  */
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { db, SelectStrategy, InsertStrategy, SelectStrategyLeg } from '../db';
+import { db, SelectStrategy, SelectStrategyLeg } from '../db';
 import { eq, and, asc } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
 import { CreateStrategyDto } from './dto/create-strategy.dto';

@@ -3,7 +3,7 @@
  * Implementa a lógica de negócio para CRUD e gerenciamento de perfil.
  */
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { db, SelectUser, InsertUser } from '../../server/db';
+import { db, SelectUser } from '../../server/db';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../../drizzle/schema';
 import { CreateUserDto } from './dto/create-user.dto';

@@ -3,7 +3,7 @@
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import { SimulationsService, PaginationOptions } from './simulations.service';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { CreateSimulationDto } from './dto/create-simulation.dto';
 import { UpdateSimulationDto } from './dto/update-simulation.dto';
 import { CreateSimulationLegDto, InstrumentType, LegAction } from './dto/create-simulation-leg.dto';

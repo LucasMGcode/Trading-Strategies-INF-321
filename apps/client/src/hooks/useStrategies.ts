@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '@/services/api';
+import axios from 'axios';
 
 export interface Strategy {
     id: string;
@@ -37,12 +38,16 @@ export const useStrategies = (filters: StrategyFilters = {}) => {
 
             const response = await apiService.getStrategies(filters);
             setStrategies(response.data);
-        } catch (err: any) {
+        } catch (err: unknown) {
             const errorMessage =
-                err.response?.data?.message || 'Erro ao buscar estratégias';
+                axios.isAxiosError(err)
+                    ? (err.response?.data as { message?: string })?.message || 'Erro ao buscar estratégias'
+                    : 'Erro ao buscar estratégias';
+
             setError(errorMessage);
             console.error('Erro ao buscar estratégias:', err);
-        } finally {
+        }
+        finally {
             setLoading(false);
         }
     }, [filters]);
@@ -60,7 +65,7 @@ export const useStrategies = (filters: StrategyFilters = {}) => {
 };
 
 export const useStrategy = (id: string) => {
-    const [strategy, setStrategy] = useState<Strategy & { legs: any[] } | null>(null);
+    const [strategy, setStrategy] = useState<Strategy & { legs: unknown[] } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -72,8 +77,12 @@ export const useStrategy = (id: string) => {
 
                 const response = await apiService.getStrategy(id);
                 setStrategy(response.data);
-            } catch (err: any) {
-                const errorMessage = err.response?.data?.message || 'Erro ao buscar estratégia';
+            } catch (err: unknown) {
+                const errorMessage =
+                    axios.isAxiosError(err)
+                        ? (err.response?.data as { message?: string })?.message || 'Erro ao buscar estratégia'
+                        : 'Erro ao buscar estratégia';
+
                 setError(errorMessage);
                 console.error('Erro ao buscar estratégia:', err);
             } finally {

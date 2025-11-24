@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 export default function Register() {
     const [username, setUsername] = useState('');
@@ -36,8 +37,12 @@ export default function Register() {
             await register(username, email, password, experienceLevel);
             toast.success('Conta criada com sucesso!');
             navigate('/dashboard');
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Erro ao registrar';
+        } catch (error: unknown) {
+            const errorMessage =
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string })?.message || 'Erro ao registrar'
+                    : 'Erro ao registrar';
+
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
