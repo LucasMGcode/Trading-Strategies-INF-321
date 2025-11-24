@@ -187,3 +187,45 @@ jobs:
           path: |
             apps/server/dist/
             apps/client/dist/
+
+  # 6. SonarCloud (análise de qualidade + cobertura)
+  sonarcloud:
+    name: Análise SonarCloud
+    runs-on: ubuntu-latest
+    needs: [test, lint, security]
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Gerar cobertura (Jest)
+        run: pnpm run test:server:coverage
+
+      - name: Mostrar LCOV
+        run: |
+          echo "LCOV do Jest:"
+          ls -R test-artifacts/server-coverage
+          head -n 30 test-artifacts/server-coverage/lcov.info
+
+      # Executar análise do SonarCloud
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
