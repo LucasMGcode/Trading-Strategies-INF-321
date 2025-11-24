@@ -1,0 +1,156 @@
+# .github/workflows/ci.yml
+
+name: CI Robusto (pnpm)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # 1. Configuração Base e Instalação de Dependências
+  setup:
+    name: Configuração e Instalação
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Instalar pnpm
+        run: npm install -g pnpm
+
+      - name: Instalar dependências (pnpm)
+        run: pnpm install --frozen-lockfile
+
+      # Salva as dependências instaladas como um artefato para reuso nos próximos jobs
+      - name: Cache de Dependências (pnpm)
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+  # 2. Testes (Depende de Setup)
+  test:
+    name: Testes (Jest) e Artefatos
+    runs-on: ubuntu-latest
+    needs: setup # Depende do job 'setup'
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      # Restaura as dependências do cache
+      - name: Restaurar Cache de Dependências
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Rodar a suíte de testes
+        run: pnpm run test
+
+      - name: Upload dos artefatos de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: test-artifacts/
+
+  # 3. Verificação de Código (Linting)
+  lint:
+    name: Verificação de Código (ESLint)
+    runs-on: ubuntu-latest
+    needs: setup # Depende do job 'setup'
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Restaurar Cache de Dependências
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Rodar o Linter
+        run: pnpm run lint
+
+  # 4. Análise de Segurança
+  security:
+    name: Análise de Segurança
+    runs-on: ubuntu-latest
+    needs: setup # Depende do job 'setup'
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Restaurar Cache de Dependências
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Rodar Auditoria de Segurança (npm audit)
+        run: npm audit --audit-level=high
+
+  # 5. Build (Depende de Testes, Lint e Segurança)
+  build:
+    name: Build de Produção
+    runs-on: ubuntu-latest
+    # Este job só roda se TODOS os jobs anteriores (test, lint, security) passarem
+    needs: [test, lint, security]
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Restaurar Cache de Dependências
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Instalar pnpm
+        run: npm install -g pnpm
+
+      # Executa o script de build: "pnpm run build:client && pnpm run build:server"
+      - name: Rodar Build
+        run: pnpm run build
+
+      # Salva os artefatos de build para o CD
+      - name: Upload dos Artefatos de Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          # Caminhos de build baseados na estrutura de monorepo e scripts do usuário
+          path: |
+            apps/server/dist/
+            apps/client/dist/
